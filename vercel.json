@@ -1,5 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/courses/:slug/classroom.html",
+      "destination": "/courses/:slug/classroom/"
+    }
+  ],
   "headers": [
     {
       "source": "/courses/(.*)/classroom.html",
@@ -19,6 +25,5 @@
         }
       ]
     }
-  ],
-  "cleanUrls": false
+  ]
 }
