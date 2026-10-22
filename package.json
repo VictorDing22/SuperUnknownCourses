@@ -10,7 +10,9 @@
     "build": "next build",
     "preview": "python3 -m http.server 4000 -d out",
     "typecheck": "tsc --noEmit",
-    "rebrand:player": "node scripts/rebrand-player.mjs --slug"
+    "rebrand:player": "node scripts/rebrand-player.mjs --slug",
+    "build:campus": "NEXT_PUBLIC_BASE_PATH=/plaza next build",
+    "preview:campus": "node scripts/preview-campus.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

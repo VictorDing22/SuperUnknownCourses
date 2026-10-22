@@ -1,0 +1,107 @@
+# 部署到学院服务器（`/plaza/`）
+
+> **状态：进行中** —— 已完成构建形态改造（A2），鉴权与进度接口尚未接入。
+>
+> | 项 | 值 |
+> |---|---|
+> | 服务器 | `101.42.182.117`（腾讯云，Ubuntu + nginx 1.28.3） |
+> | 挂载点 | `http://101.42.182.117/plaza/` |
+> | 形态 | **纯静态**（`output: 'export'`），不跑 Node，不建新库 |
+> | 身份 | 复用跨界探索平台的 JWT（`sessionStorage['cross-studio-auth-v1']`） |
+> | 数据 | 学习进度存跨界系统的现有数据库（接口待开发） |
+
+这个分支和 `main` 的关键区别只有两处：**挂载在子路径 `/plaza/`**、**需要登录态**。播放器和课程内容完全一致。
+
+Vercel 的部署方式见 `DEPLOY.md`（那是 `main` 的流程，本分支不用）。
+
+## 一、构建
+
+```bash
+export PATH=/opt/homebrew/opt/node@22/bin:$PATH
+pnpm install
+pnpm build:campus      # 等价于 NEXT_PUBLIC_BASE_PATH=/plaza next build
+```
+
+产物仍在 `out/`，但内部资源路径会带 `/plaza` 前缀（如 `/plaza/_next/static/...`）。
+
+本地预览（模拟服务器挂载点）：
+
+```bash
+pnpm preview:campus    # → http://localhost:4000/plaza/
+```
+
+> 不要用 `pnpm preview`，它把 `out/` 挂在根目录，`/plaza/...` 的请求会全部 404。
+
+## 二、nginx 配置
+
+`/plaza/` 是**静态目录**，不要写成 `proxy_pass`——本方案没有 Node 进程。
+
+```nginx
+# 必须写在 SPA 的 try_files 兜底之前
+location /plaza/ {
+    alias /var/www/plaza/;
+    index index.html;
+    try_files $uri $uri/ /plaza/index.html;
+
+    # 带 hash 的构建产物，长缓存
+    location /plaza/_next/static/ {
+        alias /var/www/plaza/_next/static/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # 播放器：8MB，缓存 1 小时
+    location ~ ^/plaza/(courses/.+/classroom\.html)$ {
+        alias /var/www/plaza/$1;
+        expires 1h;
+    }
+
+    # 图片
+    location ~ ^/plaza/(courses/.+\.(?:jpg|jpeg|png|webp|svg))$ {
+        alias /var/www/plaza/$1;
+        expires 1d;
+    }
+}
+```
+
+⚠️ 现有的跨界平台前端是 SPA（`try_files ... /index.html`），**未知路径会被它吞掉**。`/plaza/` 的 location 必须放在兜底规则前面，否则课程站永远打不开。
+
+## 三、发布
+
+```bash
+# 本地构建后同步（推荐，服务器不需要装 Node）
+rsync -avz --delete out/ user@101.42.182.117:/var/www/plaza/
+ssh user@101.42.182.117 'sudo nginx -t && sudo nginx -s reload'
+```
+
+**发布不需要重启任何进程**，也不影响跨界平台——这是静态方案最大的好处。
+
+回滚：保留上一版目录，用软链切换。
+
+```bash
+# 服务器上
+/var/www/plaza -> releases/2026-10-22-1430
+```
+
+## 四、待办
+
+| 阶段 | 内容 | 状态 |
+|---|---|---|
+| A2 | basePath + 构建脚本 + 预览脚本 | ✅ 完成 |
+| A3 | 课程资源路径加 `/plaza` 前缀（**现在 campus 构建的封面/缩略图/播放器仍会 404**） | ⬜ 待做 |
+| A4 | 登录门禁（读 sessionStorage + 跳 `/login`） | ⬜ 待做 |
+| A5 | 学习进度（调跨界系统接口） | ⬜ 待做 |
+| A6 | nginx 配置落地 + 部署脚本 + 回滚 | ⬜ 待做 |
+
+## 五、和跨界平台的边界
+
+```
+浏览器（JWT 在 sessionStorage）
+   │
+   ├── GET /plaza/...        → nginx 直接读磁盘（静态，不经过后端）
+   ├── GET /api/course/...   → nginx 反代 → Spring（现成 JWT 校验）
+   │
+   用户管理、角色、工作室关系：**全部留在跨界系统，课程站不存一份**
+```
+
+前端门禁只负责"体验"（没登录就别进去），**真正的权限校验必须在 Spring 接口层**——因为 sessionStorage 是客户端数据，改一下就能绕过。

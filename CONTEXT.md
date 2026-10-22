@@ -7,7 +7,9 @@
 
 - 项目路径：`/Users/dingsaier/Desktop/superunknown-courses`
 - 定位：西安欧亚学院 SuperUnknown 工作室的**课程展示 + 播放平台**
-- 当前阶段：**已上线** https://courses.tavis.com.cn （Vercel 独立项目 + 子域名，见 `DEPLOY.md`）；不做用户管理
+- 当前阶段：
+  - `main`：**已上线** https://courses.tavis.com.cn （Vercel 独立项目 + 子域名，见 `DEPLOY.md`），对外公开、无登录
+  - `software`：**本分支**，校园版，部署到 `http://101.42.182.117/plaza/`，复用跨界探索平台的登录态（见 `DEPLOY-CAMPUS.md`）
 - 课程来源：SuperUnknownMAIC v1.2.x 导出的**离线单文件 HTML**
 - 关键原则：**不重写播放器**，新平台只做「课程广场 → 课程详情 → 全屏播放」的外壳
 
