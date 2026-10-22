@@ -26,8 +26,19 @@ export async function fetchManagedCourses(token: string): Promise<ManagedCourse[
   return payload as ManagedCourse[];
 }
 
-export interface CourseDetail extends ManagedCourse {
+export interface CourseDetail {
+  id: number;
+  slug: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  cover?: string;
+  tags?: string[];
+  level?: string;
+  duration?: string;
   totalScenes: number;
+  stats?: { slides?: number; interactive?: number; quizzes?: number };
+  updatedAt?: string;
 }
 
 export async function fetchCourseDetail(slug: string, token: string): Promise<CourseDetail> {

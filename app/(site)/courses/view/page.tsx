@@ -2,7 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock3, Loader2, Play, Presentation, RotateCw, Smartphone } from 'lucide-react';
+import {
+  ArrowLeft,
+  Atom,
+  ChevronRight,
+  CircleHelp,
+  Clock,
+  ExternalLink,
+  Loader2,
+  Play,
+  Presentation,
+  RotateCw,
+  Smartphone,
+} from 'lucide-react';
 import { readAuthSession } from '@/lib/auth';
 import { fetchCourseDetail, type CourseDetail } from '@/lib/course-admin';
 import {
@@ -13,6 +25,7 @@ import {
   sendHeartbeat,
 } from '@/lib/learning';
 import { useLoadTimer } from '@/lib/load-timer';
+import { BASE_PATH } from '@/lib/site';
 
 const SCENE_POLL_MS = 1500;
 const HEARTBEAT_MS = 30_000;
@@ -21,15 +34,15 @@ const HEARTBEAT_MS = 30_000;
  * 通用课程页（详情 + 播放）。
  *
  * 静态导出没法为"运行时新建"的课程生成 HTML，所以统一走 `?slug=`：
- * 课程信息、播放地址都从后端拿，一个页面同时承担详情和播放。
+ * 版式与静态详情页保持一致，点封面或按钮进入播放。
  */
 export default function CourseViewPage() {
   const [slug, setSlug] = useState('');
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-
   const [progressInfo, setProgressInfo] = useState<{ lastScene: number; scenesSeen: number } | null>(null);
+
   const [playing, setPlaying] = useState(false);
   const [src, setSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -44,8 +57,27 @@ export default function CourseViewPage() {
   const activeSinceRef = useRef<number | null>(null);
   const accumulatedRef = useRef(0);
 
-  useEffect(() => {
+  const start = useCallback(async () => {
+    const session = readAuthSession();
+    if (!session) return;
     const value = new URLSearchParams(window.location.search).get('slug') ?? '';
+    if (!value) return;
+    setLoaded(false);
+    setPlaying(true);
+    const [link, progress] = await Promise.all([
+      fetchPackageUrl(value, session.accessToken),
+      fetchProgress(value, session.accessToken),
+    ]);
+    const scene = progress && progress.lastScene > 1 ? progress.lastScene : 1;
+    sceneRef.current = scene;
+    seenRef.current = new Set([scene]);
+    if (scene > 1) setResumedAt(scene);
+    setSrc(`${link?.url ?? ''}#scene-${scene}`);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const value = params.get('slug') ?? '';
     setSlug(value);
     if (!value) {
       setError('缺少课程标识');
@@ -58,19 +90,17 @@ export default function CourseViewPage() {
       setLoading(false);
       return;
     }
-    Promise.all([
-      fetchCourseDetail(value, session.accessToken),
-      fetchProgress(value, session.accessToken),
-    ])
+    Promise.all([fetchCourseDetail(value, session.accessToken), fetchProgress(value, session.accessToken)])
       .then(([detail, progress]) => {
         setCourse(detail);
         if (progress && progress.scenesSeen > 0) {
           setProgressInfo({ lastScene: progress.lastScene, scenesSeen: progress.scenesSeen });
         }
+        if (params.get('play') === '1') start();
       })
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : '课程加载失败'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [start]);
 
   const beat = useCallback(
     (ended: boolean) => {
@@ -95,28 +125,11 @@ export default function CourseViewPage() {
     [slug],
   );
 
-  const start = async () => {
-    const session = readAuthSession();
-    if (!session || !slug) return;
-    setLoaded(false);
-    timer.restart();
-    setPlaying(true);
-    const [link, progress] = await Promise.all([
-      fetchPackageUrl(slug, session.accessToken),
-      fetchProgress(slug, session.accessToken),
-    ]);
-    const scene = progress && progress.lastScene > 1 ? progress.lastScene : 1;
-    sceneRef.current = scene;
-    seenRef.current = new Set([scene]);
-    if (scene > 1) setResumedAt(scene);
-    setSrc(`${link?.url ?? ''}#scene-${scene}`);
-  };
-
-  // 播放中：场景跟踪 + 心跳
   useEffect(() => {
     if (!playing || !src) return;
     const session = readAuthSession();
     if (!session) return;
+    const token = session.accessToken;
     activeSinceRef.current = document.visibilityState === 'visible' ? Date.now() : null;
 
     const sceneTimer = window.setInterval(() => {
@@ -127,7 +140,9 @@ export default function CourseViewPage() {
       }
       sceneRef.current = scene;
       seenRef.current.add(scene);
-      saveProgress(slug, session.accessToken, scene, seenRef.current.size);
+      saveProgress(slug, token, scene, seenRef.current.size).then((value) => {
+        if (value) setProgressInfo({ lastScene: value.lastScene, scenesSeen: value.scenesSeen });
+      });
     }, SCENE_POLL_MS);
     const beatTimer = window.setInterval(() => beat(false), HEARTBEAT_MS);
     const onVisibility = () => {
@@ -144,15 +159,15 @@ export default function CourseViewPage() {
       window.clearInterval(beatTimer);
       document.removeEventListener('visibilitychange', onVisibility);
       const scene = readSceneFromFrame(frameRef.current) ?? sceneRef.current;
-      saveProgress(slug, session.accessToken, scene, seenRef.current.size);
+      saveProgress(slug, token, scene, seenRef.current.size);
       beat(true);
     };
   }, [playing, src, slug, beat]);
 
   useEffect(() => {
     if (!loaded || resumedAt === null) return;
-    const timer = window.setTimeout(() => setResumedAt(null), 5000);
-    return () => window.clearTimeout(timer);
+    const timerId = window.setTimeout(() => setResumedAt(null), 5000);
+    return () => window.clearTimeout(timerId);
   }, [loaded, resumedAt]);
 
   if (loading) {
@@ -169,10 +184,7 @@ export default function CourseViewPage() {
       <div className="mx-auto max-w-lg px-4 py-24 text-center">
         <p className="text-lg font-semibold text-foreground">课程加载失败</p>
         <p className="mt-2 text-sm text-muted-foreground">{error || '课程不存在'}</p>
-        <Link
-          href="/"
-          className="mt-6 inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground"
-        >
+        <Link href="/" className="mt-6 inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground">
           返回课程广场
         </Link>
       </div>
@@ -251,71 +263,136 @@ export default function CourseViewPage() {
   }
 
   const total = course.totalScenes || 11;
+  const percent = progressInfo ? Math.min(100, Math.round((progressInfo.scenesSeen / total) * 100)) : 0;
+  const playHref = `${BASE_PATH}/courses/view/?slug=${encodeURIComponent(course.slug)}&play=1`;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" />
-        课程广场
-      </Link>
+    <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pt-10 lg:px-8">
+      <nav className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-label="面包屑">
+        <Link href="/" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
+          <ArrowLeft className="size-3.5" />
+          课程广场
+        </Link>
+        <ChevronRight className="size-3.5 opacity-40" />
+        <span className="truncate text-foreground/80">{course.title}</span>
+      </nav>
 
-      <div className="mt-6 overflow-hidden rounded-3xl border border-border/70 bg-card">
-        {course.cover ? (
-          <div className="aspect-[16/9] w-full overflow-hidden bg-secondary">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={course.cover} alt="" className="h-full w-full object-cover" />
+      <div className="mt-6 grid gap-10 lg:grid-cols-[1.25fr_1fr] lg:items-start">
+        <button
+          type="button"
+          onClick={start}
+          className="group relative block aspect-video w-full overflow-hidden rounded-3xl bg-slate-900 text-left shadow-[0_30px_80px_-40px_rgba(15,23,42,0.55)] ring-1 ring-border/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={`播放课程：${course.title}`}
+        >
+          {course.cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={course.cover}
+              alt={course.title}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/15 to-slate-950/5" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="flex size-16 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-xl transition-transform duration-300 group-hover:scale-105">
+              <Play className="ml-1 size-6 fill-current" />
+            </span>
           </div>
-        ) : null}
-        <div className="p-6 sm:p-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3">
+            <span className="text-xs text-white/80">
+              {total} 个场景{course.stats?.interactive ? ` · ${course.stats.interactive} 个互动关卡` : ''}
+            </span>
+            <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] text-white/90 backdrop-blur-sm">
+              点击播放
+            </span>
+          </div>
+        </button>
+
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.07] px-2.5 py-1 text-[10px] font-semibold tracking-[0.14em] text-primary">
+            <span className="size-1.5 rounded-full bg-primary" />
+            SUPERUNKNOWN 工作室课程
+          </span>
+
+          <h1 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             {course.title}
           </h1>
-          {course.subtitle ? (
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">{course.subtitle}</p>
-          ) : null}
+          {course.subtitle ? <p className="mt-2 text-sm text-muted-foreground">{course.subtitle}</p> : null}
 
-          <dl className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <Presentation className="size-3.5" />
-              {total} 个场景
-            </span>
-            {course.stats?.slides ? <span>幻灯片 {course.stats.slides}</span> : null}
-            {course.stats?.interactive ? <span>互动 {course.stats.interactive}</span> : null}
-            {course.stats?.quizzes ? <span>测验 {course.stats.quizzes}</span> : null}
-            <span className="inline-flex items-center gap-1.5">
-              <Clock3 className="size-3.5" />
-              随时可学
-            </span>
-          </dl>
-
-          {progressInfo ? (
-            <div className="mt-5 max-w-sm">
-              <div className="flex items-center justify-between text-[11.5px] text-muted-foreground">
-                <span>
-                  上次学到第 {progressInfo.lastScene} 幕 · {progressInfo.scenesSeen}/{total} 幕
+          {course.tags && course.tags.length > 0 ? (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {course.tags.map((tag) => (
+                <span key={tag} className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-secondary-foreground">
+                  {tag}
                 </span>
-                <span>{Math.min(100, Math.round((progressInfo.scenesSeen / total) * 100))}%</span>
-              </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
-                <div
-                  className="h-full rounded-full bg-primary"
-                  style={{ width: `${Math.max(4, Math.min(100, (progressInfo.scenesSeen / total) * 100))}%` }}
-                />
-              </div>
+              ))}
             </div>
           ) : null}
 
-          <button
-            type="button"
-            onClick={start}
-            className="mt-7 inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            <Play className="size-4 fill-current" />
-            {progressInfo ? '继续学习' : '开始学习'}
-          </button>
+          <dl className="mt-7 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border/70">
+              <dt className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Presentation className="size-3.5 text-sky-500" />
+                场景
+              </dt>
+              <dd className="mt-1 text-xl font-semibold tracking-tight text-foreground">{total}</dd>
+            </div>
+            <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border/70">
+              <dt className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Atom className="size-3.5 text-violet-500" />
+                互动关卡
+              </dt>
+              <dd className="mt-1 text-xl font-semibold tracking-tight text-foreground">{course.stats?.interactive ?? 0}</dd>
+            </div>
+            <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border/70">
+              <dt className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <CircleHelp className="size-3.5 text-amber-500" />
+                测验
+              </dt>
+              <dd className="mt-1 text-xl font-semibold tracking-tight text-foreground">{course.stats?.quizzes ?? 0}</dd>
+            </div>
+            <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border/70">
+              <dt className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Clock className="size-3.5 text-emerald-500" />
+                时长
+              </dt>
+              <dd className="mt-1 text-sm font-semibold tracking-tight text-foreground">{course.duration || '随时可学'}</dd>
+            </div>
+          </dl>
+
+          <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
+            <button
+              type="button"
+              onClick={start}
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90 hover:shadow-md"
+            >
+              <Play className="size-4 fill-current" />
+              {progressInfo ? '继续学习' : '开始学习'}
+            </button>
+            <a
+              href={playHref}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-card px-4 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-secondary"
+            >
+              <ExternalLink className="size-4" />
+              新窗口打开
+            </a>
+          </div>
+
+          {progressInfo ? (
+            <div className="mt-4 rounded-2xl bg-card p-4 ring-1 ring-border/70">
+              <div className="flex items-center justify-between gap-3 text-[12px]">
+                <span className="font-medium text-foreground/80">上次学到第 {progressInfo.lastScene} 幕</span>
+                <span className="text-muted-foreground">
+                  {progressInfo.scenesSeen}/{total} 幕 · {percent}%
+                </span>
+              </div>
+              <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-secondary">
+                <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.max(percent, 4)}%` }} />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
