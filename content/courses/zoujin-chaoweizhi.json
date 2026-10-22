@@ -1,0 +1,88 @@
+{
+  "slug": "zoujin-chaoweizhi",
+  "title": "走进超未知软件工作室",
+  "subtitle": "工作室入门 · 网页改造实战",
+  "description": "从打开仓库、改标题、改介绍、改颜色，到成员墙打卡和报名表加字段，5 个互动关卡带你完成第一次网页改造。最后用 5 关代码自检和快问快答，确认自己真的学会了。",
+  "tags": ["网页基础", "HTML/CSS", "工作室入门", "零基础"],
+  "level": "零基础",
+  "duration": "约 1 小时",
+  "author": "SuperUnknown 工作室",
+  "updatedAt": "2026-10-22",
+  "cover": "/courses/zoujin-chaoweizhi/cover.jpg",
+  "htmlPath": "/courses/zoujin-chaoweizhi/classroom.html",
+  "featured": true,
+  "stats": {
+    "scenes": 11,
+    "slides": 4,
+    "interactive": 5,
+    "quizzes": 2
+  },
+  "chapters": [
+    {
+      "order": 1,
+      "type": "slide",
+      "title": "动手前只看这一页",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-1.jpg"
+    },
+    {
+      "order": 2,
+      "type": "slide",
+      "title": "怎么打开仓库和文件",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-2.jpg"
+    },
+    {
+      "order": 3,
+      "type": "interactive",
+      "title": "关卡 1 · 改名：完整代码 + 实验",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-3.jpg"
+    },
+    {
+      "order": 4,
+      "type": "interactive",
+      "title": "关卡 2 · 改介绍：完整代码 + 实验",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-4.jpg"
+    },
+    {
+      "order": 5,
+      "type": "interactive",
+      "title": "关卡 3 · 改颜色：完整代码 + 实验",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-5.jpg"
+    },
+    {
+      "order": 6,
+      "type": "interactive",
+      "title": "关卡 4 · 成员墙打卡：完整代码 + 实验",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-6.jpg"
+    },
+    {
+      "order": 7,
+      "type": "interactive",
+      "title": "关卡 5 · 报名表加字段：完整代码 + 实验",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-7.jpg"
+    },
+    {
+      "order": 8,
+      "type": "quiz",
+      "title": "5 关代码自检",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-8.jpg"
+    },
+    {
+      "order": 9,
+      "type": "quiz",
+      "title": "合格 / 不合格 快问快答",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-9.jpg"
+    },
+    {
+      "order": 10,
+      "type": "slide",
+      "title": "回到真仓库：下载·新建·上传·交作业",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-10.jpg"
+    },
+    {
+      "order": 11,
+      "type": "slide",
+      "title": "动手清单·演示收尾",
+      "thumb": "/courses/zoujin-chaoweizhi/scene-11.jpg"
+    }
+  ]
+}
