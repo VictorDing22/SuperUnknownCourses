@@ -1,5 +1,12 @@
 # 部署到 Vercel（子域名 courses.tavis.com.cn）
 
+> **状态：已上线（2026-10-22）** → https://courses.tavis.com.cn
+>
+> - Vercel 项目：`super-unknown-courses`（Team: VictorDing's projects / Hobby）
+> - 域名：`courses.tavis.com.cn`（DNSPod 托管，CNAME → `25b0b32ff6192345.vercel-dns-017.com`）
+> - 证书：Let's Encrypt，自动续期
+> - 推送 `main` 即自动发布
+
 本站是 `output: 'export'` 的纯静态站，部署 = 把 `out/` 目录传到 Vercel 的静态托管上，没有 Node 服务、没有数据库、没有环境依赖。
 
 主站 `www.tavis.com.cn` 已经跑着工作室门户（Vercel 上的 Next.js 动态应用），所以**课程站单独开一个项目 + 子域名**，两边互不影响。
@@ -34,7 +41,7 @@
 
    | 主机记录 | 类型 | 记录值 | TTL |
    |---|---|---|---|
-   | `courses` | `CNAME` | `cname.vercel-dns.com` | 600 |
+   | `courses` | `CNAME` | `25b0b32ff6192345.vercel-dns-017.com` | 600 |
 
    **以 Vercel 页面显示的值为准**，不要在值里带 `https://` 或结尾的点。
 
@@ -60,6 +67,22 @@ curl -I https://courses.tavis.com.cn/    # 200 + server: Vercel
 - [ ] 深链 https://courses.tavis.com.cn/courses/zoujin-chaoweizhi/learn/#scene-8 停在第 8 幕
 - [ ] 分享到微信/飞书，卡片标题图和描述正常（说明 `NEXT_PUBLIC_SITE_URL` 生效）
 - [ ] 顶部「工作室平台 ↗」仍指向 https://www.tavis.com.cn
+
+## 三点五、一个 Vercel 特有的坑（已解决，勿删）
+
+Vercel 会把导出的静态 HTML 注册成**无扩展名路由**：`public/courses/x/classroom.html` 实际由
+`/courses/x/classroom/` 提供，直接访问 `.html` 会 404。`cleanUrls: false` **无效**。
+
+`vercel.json` 里用 rewrite 兜住：
+
+```json
+"rewrites": [
+  { "source": "/courses/:slug/classroom.html", "destination": "/courses/:slug/classroom/" }
+]
+```
+
+这样应用里写的 `.html` 地址在本地（`next dev` 直接给文件）和线上（被重写）都通，
+两边行为一致，代码不用改。**删掉这条 rewrite，线上播放器会立刻 404。**
 
 ## 四、日常更新
 

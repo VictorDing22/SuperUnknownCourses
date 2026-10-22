@@ -1,6 +1,6 @@
 # SuperUnknown 课程广场
 
-西安欧亚学院 SuperUnknown 工作室课程展示站。纯静态、无登录、无数据库，课程来自 SuperUnknownMAIC 导出的单文件 HTML。
+西安欧亚学院 SuperUnknown 工作室课程展示站。线上：https://courses.tavis.com.cn纯静态、无登录、无数据库，课程来自 SuperUnknownMAIC 导出的单文件 HTML。
 
 ## 本地运行
 

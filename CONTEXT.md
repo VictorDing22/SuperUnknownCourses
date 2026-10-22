@@ -7,13 +7,15 @@
 
 - 项目路径：`/Users/dingsaier/Desktop/superunknown-courses`
 - 定位：西安欧亚学院 SuperUnknown 工作室的**课程展示 + 播放平台**
-- 当前阶段：本地 MVP 已跑通；**部署目标 = Vercel 独立项目 + 子域名 `courses.tavis.com.cn`**（子域名方案见 `DEPLOY.md`），不做用户管理
+- 当前阶段：**已上线** https://courses.tavis.com.cn （Vercel 独立项目 + 子域名，见 `DEPLOY.md`）；不做用户管理
 - 课程来源：SuperUnknownMAIC v1.2.x 导出的**离线单文件 HTML**
 - 关键原则：**不重写播放器**，新平台只做「课程广场 → 课程详情 → 全屏播放」的外壳
 
 ## 2. 当前状态
 
-本地 dev server 已启动：
+**线上地址：https://courses.tavis.com.cn**（Vercel，推送 `main` 自动发布）
+
+本地 dev server：
 
 ```bash
 cd ~/Desktop/superunknown-courses
@@ -223,7 +225,7 @@ node scripts/capture-covers.mjs --slug <slug> --cover 10
 - 手机竖屏加「建议横屏」提示
 - 学习进度（轮询 iframe 的 `#scene-N` + localStorage）
 - 工作室平台加「课程链接」字段或 iframe 入口
-- 部署（已选方案 A：Vercel 独立项目 + `courses.tavis.com.cn` 子域名；详见 `DEPLOY.md`，尚未实际上线）
+- ~~部署~~ 已完成：Vercel 独立项目 + `courses.tavis.com.cn`（2026-10-22 上线，见 `DEPLOY.md`）
 - 课程搜索/标签筛选
 - 课程封面从「截图」升级为「截图 + 标题合成」
 
