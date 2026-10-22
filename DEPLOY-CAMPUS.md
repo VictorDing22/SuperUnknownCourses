@@ -35,7 +35,8 @@ next build
 | `NEXT_PUBLIC_BASE_PATH` | 挂载前缀，校园版 `/plaza` | 空（根路径，即 main） |
 | `NEXT_PUBLIC_SITE_URL` | og:image 等绝对地址 | `http://localhost:3000` |
 | `NEXT_PUBLIC_PORTAL_URL` | 顶栏/页脚「工作室平台」指向 | `https://www.tavis.com.cn`（设成 `/` 则指回跨界平台） |
-| `NEXT_PUBLIC_LOGIN_URL` | 登录页地址 | `/login` |
+| `NEXT_PUBLIC_LOGIN_URL` | 登录页地址（一般不用改） | `${BASE_PATH}/login/` |
+| `NEXT_PUBLIC_API_BASE_URL` | 后端接口前缀 | `/api`（同源） |
 
 产物仍在 `out/`，但内部资源路径会带 `/plaza` 前缀（如 `/plaza/_next/static/...`）。
 
@@ -114,6 +115,23 @@ ssh user@101.42.182.117 'sudo nginx -t && sudo nginx -s reload'
 - 未登录时**整页不渲染内容**，只显示「去登录」卡片，跳 `/login?redirect=<当前路径>`。
 - 因为内容是客户端渲染的，**静态 HTML 里不含课程内容**——对校内系统无所谓，但如果以后要 SEO 就得重新设计。
 - ⚠️ **`/plaza/courses/*/classroom.html` 是静态文件，nginx 会直接返回**，不经过任何鉴权。想真正锁住，需要在 nginx 上加 `auth_request` 转发到后端的 `/api/users/me` 校验。**这是 A6 的事，不要以为前端门禁能挡住直接访问 URL。**
+
+## 四点五、登录页
+
+课程中心有自己的登录页 `/plaza/login/`（不经过 AuthGate），支持四种模式：
+
+| 模式 | 调用的接口 |
+|---|---|
+| 登录（学号/工号/手机号） | `POST /api/auth/login` |
+| 学生注册（14 位学号 + 班级） | `POST /api/auth/register/student` |
+| 教师注册（8 位工号） | `POST /api/auth/register/teacher` |
+| 忘记密码 | 无（引导联系管理员，二期接短信找回） |
+
+- 班级下拉来自 `GET /api/public/classes`（公开接口）
+- 登录成功写 `sessionStorage['cross-studio-auth-v1']`，**与跨界平台共用同一个 key**，所以两边单点登录
+- 「记住我」写 `localStorage['remembered-user']`，也和平台共用
+- 未登录访问任何课程页 → 跳 `/plaza/login/?next=<原路径>`，登录后自动回去
+- 退出登录 → 清会话 → 回登录页
 
 ## 五、和跨界平台的边界
 

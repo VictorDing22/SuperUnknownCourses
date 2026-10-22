@@ -52,10 +52,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             <GraduationCap className="size-6" />
           </span>
           <h1 className="mt-5 text-lg font-semibold tracking-tight text-foreground">
-            需要先登录跨界探索平台
+            需要先登录课程中心
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            课程广场使用工作室平台的账号，登录后再回到这里即可继续学习。
+            课程中心与跨界探索平台共用账号，登录后会自动回到刚才的页面。
           </p>
           <a
             href={loginHref(returnTo)}
@@ -65,8 +65,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             去登录
           </a>
           <p className="mt-4 text-xs text-muted-foreground/70">
-            登录页会记住你要回到
-            <span className="mx-1 font-mono text-foreground/70">/plaza/</span>
+            还没有账号？登录页可以直接注册。
           </p>
         </div>
       </div>

@@ -18,9 +18,6 @@ export const IS_CAMPUS = BASE_PATH !== '';
  */
 export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL ?? 'https://www.tavis.com.cn';
 
-/** 门户登录页 */
-export const LOGIN_URL = process.env.NEXT_PUBLIC_LOGIN_URL ?? '/login';
-
 /**
  * 给以 `/` 开头的站内资源路径加上部署前缀。
  * - 外部链接（http://、//cdn…）和已经是前缀开头的路径原样返回
