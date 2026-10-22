@@ -19,5 +19,6 @@
         }
       ]
     }
-  ]
+  ],
+  "cleanUrls": false
 }
