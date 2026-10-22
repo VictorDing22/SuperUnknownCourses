@@ -4,6 +4,7 @@ import { EurasiaMark } from '@/components/eurasia-mark';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserChip } from '@/components/user-chip';
 import { PortalLink } from '@/components/portal-link';
+import { ManageLink } from '@/components/manage-link';
 
 export function SiteHeader() {
   return (
@@ -30,6 +31,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="flex shrink-0 items-center gap-1 sm:gap-2" aria-label="主导航">
+          <ManageLink className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:px-3 sm:text-sm" />
           <PortalLink className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:px-3 sm:text-sm" />
           <UserChip className="ml-1 inline-flex items-center" />
           <ThemeToggle className="ml-0.5 sm:ml-1" />
