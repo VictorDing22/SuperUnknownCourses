@@ -43,7 +43,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-        <CourseExplorer courses={courses} />
+        <CourseExplorer fallback={courses} />
 
         <p className="mt-8 text-xs leading-relaxed text-muted-foreground/70">
           {IS_CAMPUS

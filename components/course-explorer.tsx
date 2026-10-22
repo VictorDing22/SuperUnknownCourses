@@ -1,10 +1,70 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Search, X } from 'lucide-react';
-import { CourseCard } from '@/components/course-card';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { Clock, Layers, Puzzle, Search, X } from 'lucide-react';
 import { ComingSoonCard } from '@/components/coming-soon-card';
+import { readAuthSession } from '@/lib/auth';
 import type { Course } from '@/lib/courses';
+
+/** 课程广场的卡片数据：静态课程和接口课程都归一到这个形状 */
+interface PlazaCourse {
+  slug: string;
+  title: string;
+  subtitle: string;
+  cover: string;
+  scenes: number;
+  slides: number;
+  interactive: number;
+  quizzes: number;
+  duration: string;
+  tags: string[];
+  level: string;
+}
+
+interface ApiCatalogRow {
+  slug: string;
+  title: string;
+  subtitle?: string;
+  cover?: string;
+  totalScenes?: number;
+  stats?: { slides?: number; interactive?: number; quizzes?: number };
+  duration?: string;
+  tags?: string[];
+  level?: string;
+}
+
+function fromApi(row: ApiCatalogRow): PlazaCourse {
+  return {
+    slug: row.slug,
+    title: row.title,
+    subtitle: row.subtitle ?? '',
+    cover: row.cover ?? '',
+    scenes: Number(row.totalScenes ?? 0) || 0,
+    slides: Number(row.stats?.slides ?? 0) || 0,
+    interactive: Number(row.stats?.interactive ?? 0) || 0,
+    quizzes: Number(row.stats?.quizzes ?? 0) || 0,
+    duration: row.duration ?? '',
+    tags: row.tags ?? [],
+    level: row.level ?? '',
+  };
+}
+
+function fromStatic(course: Course): PlazaCourse {
+  return {
+    slug: course.slug,
+    title: course.title,
+    subtitle: course.subtitle,
+    cover: course.cover,
+    scenes: course.stats.scenes,
+    slides: course.stats.slides,
+    interactive: course.stats.interactive,
+    quizzes: course.stats.quizzes,
+    duration: course.duration,
+    tags: course.tags ?? [],
+    level: course.level ?? '',
+  };
+}
 
 /** 模糊匹配：先按子串，再退化为子序列（允许中间夹别的字） */
 function fuzzyMatch(text: string, query: string): boolean {
@@ -22,20 +82,41 @@ function fuzzyMatch(text: string, query: string): boolean {
 
 /**
  * 课程广场的搜索 + 网格。
- * 学生和教师看到的是同一份课程列表，只按关键词过滤，不做角色区分。
+ *
+ * 优先读后端课程目录（教师上传的课程会出现在这里）；
+ * 接口不可用时退回构建时的静态课程，保证页面不至于空白。
  */
-export function CourseExplorer({ courses }: { courses: Course[] }) {
+export function CourseExplorer({ fallback }: { fallback: Course[] }) {
   const [keyword, setKeyword] = useState('');
+  const [courses, setCourses] = useState<PlazaCourse[]>(() => fallback.map(fromStatic));
+  const [source, setSource] = useState<'static' | 'api'>('static');
+
+  useEffect(() => {
+    const session = readAuthSession();
+    if (!session) return;
+    let cancelled = false;
+    fetch('/api/course/catalog', {
+      headers: { Accept: 'application/json', Authorization: `Bearer ${session.accessToken}` },
+      cache: 'no-cache',
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: unknown) => {
+        if (cancelled || !Array.isArray(payload) || payload.length === 0) return;
+        setCourses(payload.map((row) => fromApi(row as ApiCatalogRow)));
+        setSource('api');
+      })
+      .catch(() => {
+        /* 接口不可用时保持静态列表 */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     if (!keyword.trim()) return courses;
     return courses.filter((course) =>
-      fuzzyMatch(
-        [course.title, course.subtitle, course.description, ...(course.tags ?? []), course.level]
-          .filter(Boolean)
-          .join(' '),
-        keyword,
-      ),
+      fuzzyMatch([course.title, course.subtitle, ...course.tags, course.level].join(' '), keyword),
     );
   }, [courses, keyword]);
 
@@ -94,14 +175,55 @@ export function CourseExplorer({ courses }: { courses: Course[] }) {
       ) : (
         <div className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((course, index) => (
-            <div
+            <Link
               key={course.slug}
-              className="animate-fade-up"
+              href={`/courses/view/?slug=${encodeURIComponent(course.slug)}`}
+              className="group flex animate-fade-up flex-col overflow-hidden rounded-3xl bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-border/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_-24px_rgba(15,23,42,0.35)] hover:ring-primary/30"
               style={{ animationDelay: `${index * 70}ms` }}
             >
-              <CourseCard course={course} />
-            </div>
+              <span className="relative block aspect-[16/9] overflow-hidden bg-secondary">
+                {course.cover ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={course.cover}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                  />
+                ) : null}
+                <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-slate-950/55 px-2.5 py-1 text-[11px] text-white backdrop-blur-sm">
+                  <Layers className="size-3" />
+                  {course.scenes} 个场景
+                </span>
+              </span>
+
+              <span className="flex flex-col gap-2 p-5">
+                <strong className="text-[15px] font-semibold leading-snug tracking-tight text-foreground">
+                  {course.title}
+                </strong>
+                {course.subtitle ? (
+                  <span className="text-[13px] text-muted-foreground">{course.subtitle}</span>
+                ) : null}
+                <span className="mt-1 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px] text-muted-foreground/80">
+                  {course.slides ? <span>{course.slides} 幻灯片</span> : null}
+                  {course.interactive ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Puzzle className="size-3" />
+                      {course.interactive} 互动
+                    </span>
+                  ) : null}
+                  {course.quizzes ? <span>{course.quizzes} 测验</span> : null}
+                  {course.duration ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {course.duration}
+                    </span>
+                  ) : null}
+                </span>
+              </span>
+            </Link>
           ))}
+
           {searching ? null : (
             <div
               className="hidden animate-fade-up sm:block"
@@ -112,6 +234,10 @@ export function CourseExplorer({ courses }: { courses: Course[] }) {
           )}
         </div>
       )}
+
+      {source === 'static' && courses.length > 0 ? (
+        <span className="hidden" aria-hidden />
+      ) : null}
     </>
   );
 }
