@@ -26,6 +26,42 @@ export async function fetchManagedCourses(token: string): Promise<ManagedCourse[
   return payload as ManagedCourse[];
 }
 
+export interface CourseDetail extends ManagedCourse {
+  totalScenes: number;
+}
+
+export async function fetchCourseDetail(slug: string, token: string): Promise<CourseDetail> {
+  const response = await fetch(`${API_BASE}/course/${slug}`, {
+    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    cache: 'no-cache',
+  });
+  if (!response.ok) throw new Error(`课程信息加载失败（HTTP ${response.status}）`);
+  return (await response.json()) as CourseDetail;
+}
+
+export interface CreateCourseInput {
+  title: string;
+  subtitle?: string;
+}
+
+export async function createCourse(input: CreateCourseInput, token: string) {
+  const response = await fetch(`${API_BASE}/course`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(input),
+  });
+  const payload: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const problem = (payload ?? {}) as { detail?: string; title?: string };
+    throw new Error(problem.detail || problem.title || `创建课程失败（HTTP ${response.status}）`);
+  }
+  return payload as { id: number; slug: string; title: string; subtitle: string };
+}
+
 export interface UploadResult {
   version: number;
   sizeBytes: number;
