@@ -8,7 +8,7 @@
 - 项目路径：`/Users/dingsaier/Desktop/superunknown-courses`
 - 定位：西安欧亚学院 SuperUnknown 工作室的**课程展示 + 播放平台**
 - 当前阶段：本地 MVP 已跑通，不做用户管理、不做部署
-- 课程来源：OpenMAIC v1.2.x 导出的**离线单文件 HTML**
+- 课程来源：SuperUnknownMAIC v1.2.x 导出的**离线单文件 HTML**
 - 关键原则：**不重写播放器**，新平台只做「课程广场 → 课程详情 → 全屏播放」的外壳
 
 ## 2. 当前状态
@@ -64,7 +64,7 @@ export PATH=/opt/homebrew/opt/node@22/bin:$PATH
 - 卡片：大圆角、轻阴影、hover 上浮/封面轻微放大
 - 顶部导航：左侧**胶囊式品牌条**（形式参考 SuperUnknownMAIC）：E^u 校徽 + 西安欧亚学院 + `XI'AN EURASIA UNIVERSITY` + 竖分隔线 + 青色「课程广场」；胶囊即首页入口
 - 顶部导航右侧：工作室平台 ↗（→ https://www.tavis.com.cn）/ 主题切换（原「课程」链接已去掉，避免与品牌条的「课程广场」重复）
-- 页脚：E^u + `SuperUnknown · 超未知`（工作室身份放在下面）；右侧为「西安欧亚学院 · 基于 OpenMAIC 开源项目构建」+ 工作室平台 + 课程广场
+- 页脚：E^u + `SuperUnknown · 超未知`（工作室身份放在下面）；右侧为「西安欧亚学院 · 基于 SuperUnknownMAIC 构建」+ 工作室平台 + 课程广场
 - 首页 Hero：顶部一行**工作室字标** `E^u SuperUnknown · 超未知软件工作室`（宽字距、深色词 + 灰色中文），下面是页面标题「课程广场」+ 一句副标题 + 「共 N 门课程」胶囊；原来的「西安欧亚学院 · 和而不同」胶囊已去掉（学校身份交给顶栏品牌条）
 - 首页：轻量 Hero + 课程网格（**不做大卡**）
 - 课程卡：16:9 真实截图、标题、副标题、幻灯片/互动/测验统计
@@ -119,11 +119,12 @@ lib/
 content/courses/
   zoujin-chaoweizhi.json        课程元数据 + 11 个章节
 public/courses/zoujin-chaoweizhi/
-  classroom.html                7.8MB OpenMAIC 离线课程
+  classroom.html                7.8MB SuperUnknownMAIC 离线课程
   cover.jpg                     课程封面（scene 10）
   scene-1.jpg ~ scene-11.jpg    章节缩略图
 scripts/
   capture-covers.mjs            Playwright 截封面/缩略图
+  rebrand-player.mjs            把导出播放器里的 OpenMAIC 标识改成 SuperUnknownMAIC
 docs/
   home.png / detail.png / learn.png  截图
 ```
@@ -141,7 +142,7 @@ docs/
 
 `lib/courses.ts` 目前只导入这一门课。新增课程时：
 
-1. 把 OpenMAIC 导出的 HTML 放到 `public/courses/<slug>/classroom.html`
+1. 把 SuperUnknownMAIC 导出的 HTML 放到 `public/courses/<slug>/classroom.html`
 2. 生成封面/缩略图：
 
 ```bash
@@ -153,10 +154,11 @@ node scripts/capture-covers.mjs --slug <slug> --cover 10
 
 ## 8. 播放器实现细节
 
-- `classroom.html` 是 OpenMAIC v1.2.x 的离线导出：
+- `classroom.html` 是 SuperUnknownMAIC（v1.2.x 导出格式）的离线导出：
   - 单文件、内嵌 45 段媒体、`connect-src 'none'`
   - 自带开始遮罩、上一页/下一页、播放/暂停、字幕、全屏、场景侧栏
   - 支持 `#scene-N`（1-based）深链
+- 导出器写入的 `openmaic-*` 元素 id / CSS 类 / `__OPENMAIC*__` 全局已统一改名为 `superunknownmaic-*` / `__SUPERUNKNOWNMAIC*__`（`scripts/rebrand-player.mjs`）；**重新导出新课程后要再跑一次**，否则 HTML 里又会带回 OpenMAIC 标识
 - 播放页用 iframe 加载，`allow="autoplay; fullscreen; clipboard-write"`
 - `PlayerShell` 在客户端挂载后才设置 iframe src，避免 hash 导致二次加载
 - `#scene-N` 从 `window.location.hash` 读取；章节卡片直接链接到带 hash 的播放页
@@ -165,7 +167,7 @@ node scripts/capture-covers.mjs --slug <slug> --cover 10
 ### 已知限制
 
 - 手机竖屏时 16:9 课程会上下留白（播放器自身布局），横屏体验最好
-- iframe 内是 OpenMAIC 播放器 UI，不能直接用平台视觉覆盖
+- iframe 内是 SuperUnknownMAIC 播放器 UI，不能直接用平台视觉覆盖
 - 没有学习进度/账号/统计（按需求暂时不做）
 - `classroom.html` 里的 `classroomUrl` 仍指向 `open.maic.chat`；本课程没有 PBL/讨论场景，暂未使用
 - 课程更新需要重新导出 HTML 并重新生成截图
@@ -175,7 +177,7 @@ node scripts/capture-covers.mjs --slug <slug> --cover 10
 ### SuperUnknownMAIC
 
 - 路径：`/Users/dingsaier/Desktop/SuperUnknownMAIC`
-- 原始 OpenMAIC 定制项目（v1.0.0 分支 + 欧亚本地化）
+- 基于上游 OpenMAIC 的欧亚本地化定制（v1.0.0 分支）
 - 用于生成课程、导出离线 HTML
 - 不是这个展示平台的依赖；新平台只消费导出的 HTML
 
@@ -190,11 +192,11 @@ node scripts/capture-covers.mjs --slug <slug> --cover 10
 - 「课题简介」是纯文本，不会渲染可点击链接
 - 因此工作室平台不能靠后台配置直接打开课程；需要加课程链接字段/iframe，或先用外链
 
-### OpenMAIC 版本背景
+### 版本背景：上游 OpenMAIC
 
-- 官方 v1.2.0（2026-10-16）新增「离线 HTML 课程」导出
+- 上游 v1.2.0（2026-10-16）新增「离线 HTML 课程」导出，SuperUnknownMAIC 沿用该导出格式
 - v1.2.0 需要 PostgreSQL + 常驻 Node 服务；Vercel 停留在 1.1.x
-- 当前 `classroom.html` 就是 v1.2.x 的离线导出
+- 当前 `classroom.html` 就是 SuperUnknownMAIC v1.2.x 格式的离线导出
 - 官方托管站：https://open.maic.chat
 - 清华 MAIC 平台：https://www.maic.tsinghua.edu.cn（独立产品，课程不互通）
 
@@ -202,7 +204,7 @@ node scripts/capture-covers.mjs --slug <slug> --cover 10
 
 1. 一开始只是把 SuperUnknownMAIC 跑起来（Node 22 + `pnpm dev`）。
 2. 讨论「生成的课程导出给同学看，是否要重写网课平台」：
-   - 结论：不需要重写；OpenMAIC 本身有播放器，v1.2.x 还能导出离线 HTML。
+   - 结论：不需要重写；SuperUnknownMAIC 本身有播放器，v1.2.x 还能导出离线 HTML。
 3. 分析工作室平台能否直接打开课程：
    - 结论：平台没有课程模块，只能加链接/iframe 或外链绕过。
 4. 用户决定新建一个纯展示平台，前端风格接近 SuperUnknownMAIC，不做用户管理。

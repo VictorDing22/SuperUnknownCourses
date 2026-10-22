@@ -9,7 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "preview": "python3 -m http.server 4000 -d out",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "rebrand:player": "node scripts/rebrand-player.mjs --slug"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

@@ -47,7 +47,7 @@ export default function HomePage() {
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-foreground">全部课程</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              课程由 OpenMAIC 生成，支持字幕、全屏和离线播放
+              课程由 SuperUnknownMAIC 生成，支持字幕、全屏和离线播放
             </p>
           </div>
           <span className="hidden text-xs text-muted-foreground sm:block">

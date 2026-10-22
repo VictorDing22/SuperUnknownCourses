@@ -17,6 +17,6 @@ pnpm dev
 
 注意：
 
-- 课程播放器是 OpenMAIC 导出的 `public/courses/zoujin-chaoweizhi/classroom.html`，**不要重写播放器**，平台只做外壳。
+- 课程播放器是 SuperUnknownMAIC 导出的 `public/courses/zoujin-chaoweizhi/classroom.html`，**不要重写播放器**，平台只做外壳。
 - 没有用户管理、没有数据库、没有部署；按当前需求保持纯静态。
 - 课程 HTML 是 7.8MB，新增课程时不要把它内联进 React bundle，继续放 `public/` 用 iframe。

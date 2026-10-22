@@ -1,6 +1,6 @@
 # SuperUnknown 课程广场
 
-西安欧亚学院 SuperUnknown 工作室课程展示站。纯静态、无登录、无数据库，课程来自 OpenMAIC 导出的单文件 HTML。
+西安欧亚学院 SuperUnknown 工作室课程展示站。纯静态、无登录、无数据库，课程来自 SuperUnknownMAIC 导出的单文件 HTML。
 
 ## 本地运行
 
@@ -24,12 +24,12 @@ pnpm dev
 - `app/(site)/` — 课程广场、课程详情
 - `app/(player)/` — 全屏播放页
 - `content/courses/<slug>.json` — 课程元数据与章节
-- `public/courses/<slug>/classroom.html` — OpenMAIC 导出的课程播放器
+- `public/courses/<slug>/classroom.html` — SuperUnknownMAIC 导出的课程播放器
 - `public/courses/<slug>/cover.jpg`、`scene-*.jpg` — 课程封面与章节缩略图
 
 ## 新增课程
 
-1. 把 OpenMAIC 导出的 HTML 放到 `public/courses/<slug>/classroom.html`
+1. 把 SuperUnknownMAIC 导出的 HTML 放到 `public/courses/<slug>/classroom.html`
 2. 生成封面和章节缩略图：
 
 ```bash

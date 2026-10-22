@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Capture course covers and chapter thumbnails from an OpenMAIC offline HTML.
+ * Capture course covers and chapter thumbnails from a SuperUnknownMAIC offline HTML.
  *
  * Usage:
  *   node scripts/capture-covers.mjs --slug zoujin-chaoweizhi

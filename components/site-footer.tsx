@@ -17,8 +17,8 @@ export function SiteFooter() {
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <span className="hidden sm:inline">西安欧亚学院 · 基于 OpenMAIC 开源项目构建</span>
-          <span className="sm:hidden">基于 OpenMAIC 开源项目构建</span>
+          <span className="hidden sm:inline">西安欧亚学院 · 基于 SuperUnknownMAIC 构建</span>
+          <span className="sm:hidden">基于 SuperUnknownMAIC 构建</span>
           <a
             href="https://www.tavis.com.cn"
             target="_blank"
