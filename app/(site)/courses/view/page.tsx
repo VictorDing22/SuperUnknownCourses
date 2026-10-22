@@ -8,7 +8,6 @@ import {
   ChevronRight,
   CircleHelp,
   Clock,
-  ExternalLink,
   Loader2,
   Play,
   Presentation,
@@ -25,7 +24,6 @@ import {
   sendHeartbeat,
 } from '@/lib/learning';
 import { useLoadTimer } from '@/lib/load-timer';
-import { BASE_PATH } from '@/lib/site';
 import { getBundledPlayer } from '@/lib/courses';
 
 const SCENE_POLL_MS = 1500;
@@ -273,7 +271,6 @@ export default function CourseViewPage() {
 
   const total = course.totalScenes || 11;
   const percent = progressInfo ? Math.min(100, Math.round((progressInfo.scenesSeen / total) * 100)) : 0;
-  const playHref = `${BASE_PATH}/courses/view/?slug=${encodeURIComponent(course.slug)}&play=1`;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pt-10 lg:px-8">
@@ -375,25 +372,14 @@ export default function CourseViewPage() {
             </p>
           ) : null}
 
-          <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
-            <button
-              type="button"
-              onClick={start}
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90 hover:shadow-md"
-            >
-              <Play className="size-4 fill-current" />
-              {progressInfo ? '继续学习' : '开始学习'}
-            </button>
-            <a
-              href={playHref}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-card px-4 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-secondary"
-            >
-              <ExternalLink className="size-4" />
-              新窗口打开
-            </a>
-          </div>
+          <button
+            type="button"
+            onClick={start}
+            className="mt-7 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90 hover:shadow-md"
+          >
+            <Play className="size-4 fill-current" />
+            {progressInfo ? '继续学习' : '开始学习'}
+          </button>
 
           {progressInfo ? (
             <div className="mt-4 rounded-2xl bg-card p-4 ring-1 ring-border/70">
