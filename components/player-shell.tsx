@@ -1,24 +1,48 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { EurasiaMark } from '@/components/eurasia-mark';
 import type { Course } from '@/lib/courses';
+import { readAuthSession } from '@/lib/auth';
+import { fetchProgress, readSceneFromFrame, saveProgress, sendHeartbeat } from '@/lib/learning';
 import { cn } from '@/lib/utils';
 
+const SCENE_POLL_MS = 1500;
+const HEARTBEAT_MS = 30_000;
+
+function parseSceneHash(hash: string): number | null {
+  const matched = /scene-(\d+)/.exec(hash);
+  return matched ? Number(matched[1]) : null;
+}
+
 export function PlayerShell({ course }: { course: Course }) {
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
   const [src, setSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  /**
-   * 嵌入模式：被跨界系统用 iframe 打开时带 ?embed=1，
-   * 此时隐藏平台自己的「返回课程」胶囊（外层已有导航），避免两个返回入口打架。
-   */
+  /** 嵌入模式：被跨界系统用 iframe 打开时带 ?embed=1，隐藏平台自己的返回入口 */
   const [embedded, setEmbedded] = useState(false);
+  /** 续播提示：从上次进度恢复时短暂显示 */
+  const [resumedAt, setResumedAt] = useState<number | null>(null);
+  const [resumeVisible, setResumeVisible] = useState(true);
+
+  const sceneRef = useRef(1);
+  const seenRef = useRef<Set<number>>(new Set([1]));
+  const sessionIdRef = useRef<number | null>(null);
+  const activeSinceRef = useRef<number | null>(null);
+  const accumulatedRef = useRef(0);
 
   useEffect(() => {
     setEmbedded(new URLSearchParams(window.location.search).has('embed'));
   }, []);
+
+  // 续播提示在播放器真正加载完成后再计时隐藏（加载本身可能要几秒）
+  useEffect(() => {
+    if (!loaded || resumedAt === null) return;
+    const timer = window.setTimeout(() => setResumeVisible(false), 6000);
+    return () => window.clearTimeout(timer);
+  }, [loaded, resumedAt]);
 
   // 嵌入模式下把 ESC 转给外层容器：iframe 获得焦点后，父页收不到键盘事件
   useEffect(() => {
@@ -31,21 +55,114 @@ export function PlayerShell({ course }: { course: Course }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [embedded]);
 
+  // 起始场景：URL hash 优先（深链），否则续播到上次的进度
   useEffect(() => {
-    const applyHash = () => {
-      setLoaded(false);
-      setSrc(`${course.htmlPath}${window.location.hash}`);
+    let cancelled = false;
+    const apply = (scene: number, resumed: boolean) => {
+      if (cancelled) return;
+      sceneRef.current = scene;
+      seenRef.current = new Set([scene]);
+      setSrc(`${course.htmlPath}#scene-${scene}`);
+      if (resumed) setResumedAt(scene);
     };
 
-    applyHash();
-    window.addEventListener('hashchange', applyHash);
-    return () => window.removeEventListener('hashchange', applyHash);
-  }, [course.htmlPath]);
+    const hashScene = parseSceneHash(window.location.hash);
+    if (hashScene) {
+      apply(hashScene, false);
+      return;
+    }
+
+    const session = readAuthSession();
+    if (!session) {
+      apply(1, false);
+      return;
+    }
+
+    fetchProgress(course.slug, session.accessToken).then((progress) => {
+      const scene = progress && progress.lastScene > 1 ? progress.lastScene : 1;
+      apply(scene, scene > 1);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [course.slug, course.htmlPath]);
+
+  /** 上报一次心跳；ended 时结算离开时间 */
+  const beat = useCallback(
+    (ended: boolean) => {
+      const session = readAuthSession();
+      if (!session) return;
+      const now = Date.now();
+      if (activeSinceRef.current !== null) {
+        accumulatedRef.current += now - activeSinceRef.current;
+        activeSinceRef.current = ended ? null : now;
+      }
+      const scene = readSceneFromFrame(frameRef.current) ?? sceneRef.current;
+      sendHeartbeat(course.slug, session.accessToken, {
+        sessionId: sessionIdRef.current,
+        durationMs: accumulatedRef.current,
+        lastScene: scene,
+        scenesSeen: seenRef.current.size,
+        ended,
+      }).then((result) => {
+        if (result) sessionIdRef.current = result.sessionId;
+      });
+    },
+    [course.slug],
+  );
+
+  // 场景跟踪 + 定时心跳 + 切后台暂停计时
+  useEffect(() => {
+    if (!src) return;
+    const session = readAuthSession();
+    if (!session) return;
+    const token = session.accessToken;
+
+    activeSinceRef.current = document.visibilityState === 'visible' ? Date.now() : null;
+
+    const sceneTimer = window.setInterval(() => {
+      const scene = readSceneFromFrame(frameRef.current);
+      if (scene === null || scene === sceneRef.current) {
+        seenRef.current.add(sceneRef.current);
+        return;
+      }
+      sceneRef.current = scene;
+      seenRef.current.add(scene);
+      saveProgress(course.slug, token, scene, seenRef.current.size);
+    }, SCENE_POLL_MS);
+
+    const beatTimer = window.setInterval(() => beat(false), HEARTBEAT_MS);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        beat(false);
+        activeSinceRef.current = null;
+      } else {
+        activeSinceRef.current = Date.now();
+      }
+    };
+    const onPageHide = () => beat(true);
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', onPageHide);
+
+    return () => {
+      window.clearInterval(sceneTimer);
+      window.clearInterval(beatTimer);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', onPageHide);
+      const scene = readSceneFromFrame(frameRef.current) ?? sceneRef.current;
+      saveProgress(course.slug, token, scene, seenRef.current.size);
+      beat(true);
+    };
+  }, [src, course.slug, beat]);
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-slate-950">
       {src ? (
         <iframe
+          ref={frameRef}
           src={src}
           title={course.title}
           className="h-dvh w-full border-0"
@@ -64,6 +181,12 @@ export function PlayerShell({ course }: { course: Course }) {
           返回课程
         </Link>
       )}
+
+      {resumedAt !== null && loaded && resumeVisible ? (
+        <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full bg-primary/95 px-3.5 py-1.5 text-[11.5px] font-medium text-white shadow-lg">
+          已回到上次学习的位置 · 第 {resumedAt} 幕
+        </div>
+      ) : null}
 
       <div
         className={cn(

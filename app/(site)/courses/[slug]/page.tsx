@@ -18,6 +18,7 @@ import {
 import { ChapterCard } from '@/components/chapter-card';
 import { getAllCourses, getCourse } from '@/lib/courses';
 import { IS_CAMPUS } from '@/lib/site';
+import { CourseProgressCard } from '@/components/course-progress-card';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -171,6 +172,8 @@ export default async function CourseDetailPage({ params }: PageProps) {
               新窗口打开
             </Link>
           </div>
+
+          {IS_CAMPUS ? <CourseProgressCard slug={course.slug} /> : null}
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground/80">
             <span className="inline-flex items-center gap-1.5">
