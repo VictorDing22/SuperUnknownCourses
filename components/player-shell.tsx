@@ -6,7 +6,13 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { EurasiaMark } from '@/components/eurasia-mark';
 import type { Course } from '@/lib/courses';
 import { readAuthSession } from '@/lib/auth';
-import { fetchProgress, readSceneFromFrame, saveProgress, sendHeartbeat } from '@/lib/learning';
+import {
+  fetchPackageUrl,
+  fetchProgress,
+  readSceneFromFrame,
+  saveProgress,
+  sendHeartbeat,
+} from '@/lib/learning';
 import { cn } from '@/lib/utils';
 
 const SCENE_POLL_MS = 1500;
@@ -58,11 +64,11 @@ export function PlayerShell({ course }: { course: Course }) {
   // 起始场景：URL hash 优先（深链），否则续播到上次的进度
   useEffect(() => {
     let cancelled = false;
-    const apply = (scene: number, resumed: boolean) => {
+    const apply = (scene: number, resumed: boolean, base?: string) => {
       if (cancelled) return;
       sceneRef.current = scene;
       seenRef.current = new Set([scene]);
-      setSrc(`${course.htmlPath}#scene-${scene}`);
+      setSrc(`${base ?? course.htmlPath}#scene-${scene}`);
       if (resumed) setResumedAt(scene);
     };
 
@@ -78,9 +84,13 @@ export function PlayerShell({ course }: { course: Course }) {
       return;
     }
 
-    fetchProgress(course.slug, session.accessToken).then((progress) => {
+    // 优先用后端下发的签名地址（教师上传的新版本），拿不到就退回仓库里的静态文件
+    Promise.all([
+      fetchPackageUrl(course.slug, session.accessToken),
+      fetchProgress(course.slug, session.accessToken),
+    ]).then(([link, progress]) => {
       const scene = progress && progress.lastScene > 1 ? progress.lastScene : 1;
-      apply(scene, scene > 1);
+      apply(scene, scene > 1, link?.url);
     });
 
     return () => {

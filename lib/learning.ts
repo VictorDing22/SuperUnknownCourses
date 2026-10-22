@@ -76,6 +76,20 @@ export function sendHeartbeat(
   });
 }
 
+export interface PackageLink {
+  url: string;
+  expiresAt: number;
+  version: number;
+}
+
+/**
+ * 课程包播放地址（签名，10 分钟有效）。
+ * 拿不到（没上传过、接口不可用）时返回 null，调用方退回静态文件。
+ */
+export async function fetchPackageUrl(slug: string, token: string): Promise<PackageLink | null> {
+  return call<PackageLink>(`/course/${slug}/package-url`, token);
+}
+
 /** 从 iframe 的 hash 里读当前场景序号（同源才读得到） */
 export function readSceneFromFrame(frame: HTMLIFrameElement | null): number | null {
   try {

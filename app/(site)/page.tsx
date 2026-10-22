@@ -1,5 +1,4 @@
-import { CourseCard } from '@/components/course-card';
-import { ComingSoonCard } from '@/components/coming-soon-card';
+import { CourseExplorer } from '@/components/course-explorer';
 import { EurasiaMark } from '@/components/eurasia-mark';
 import { getAllCourses } from '@/lib/courses';
 import { IS_CAMPUS } from '@/lib/site';
@@ -44,35 +43,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">全部课程</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              课程由 SuperUnknownMAIC 生成，支持字幕、全屏和离线播放
-            </p>
-          </div>
-          <span className="hidden text-xs text-muted-foreground sm:block">
-            {courses.length} 门 · 持续更新
-          </span>
-        </div>
-
-        <div className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course, index) => (
-            <div
-              key={course.slug}
-              className="animate-fade-up"
-              style={{ animationDelay: `${index * 70}ms` }}
-            >
-              <CourseCard course={course} />
-            </div>
-          ))}
-          <div
-            className="hidden animate-fade-up sm:block"
-            style={{ animationDelay: `${courses.length * 70}ms` }}
-          >
-            <ComingSoonCard />
-          </div>
-        </div>
+        <CourseExplorer courses={courses} />
 
         <p className="mt-8 text-xs leading-relaxed text-muted-foreground/70">
           {IS_CAMPUS
