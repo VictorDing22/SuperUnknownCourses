@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { EurasiaMark } from '@/components/eurasia-mark';
-import { PORTAL_URL } from '@/lib/site';
+import { PORTAL_LABEL, PORTAL_URL } from '@/lib/site';
 
 export function SiteFooter() {
   return (
@@ -25,8 +25,8 @@ export function SiteFooter() {
             {...(/^https?:/i.test(PORTAL_URL) ? { target: '_blank', rel: 'noreferrer' } : {})}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
           >
-            工作室平台
-            <ArrowUpRight className="size-3" />
+            {PORTAL_LABEL}
+            {/^https?:/i.test(PORTAL_URL) ? <ArrowUpRight className="size-3" /> : null}
           </a>
           <Link href="/" className="transition-colors hover:text-foreground">
             课程广场

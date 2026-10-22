@@ -3,7 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { EurasiaMark } from '@/components/eurasia-mark';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserChip } from '@/components/user-chip';
-import { PORTAL_URL } from '@/lib/site';
+import { PORTAL_LABEL, PORTAL_URL } from '@/lib/site';
 
 export function SiteHeader() {
   const portalIsExternal = /^https?:/i.test(PORTAL_URL);
@@ -37,8 +37,10 @@ export function SiteHeader() {
             {...(portalIsExternal ? { target: '_blank', rel: 'noreferrer' } : {})}
             className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:px-3 sm:text-sm"
           >
-            工作室平台
-            <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            {PORTAL_LABEL}
+            {portalIsExternal ? (
+              <ArrowUpRight className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            ) : null}
           </a>
           <UserChip className="ml-1 inline-flex items-center" />
           <ThemeToggle className="ml-0.5 sm:ml-1" />

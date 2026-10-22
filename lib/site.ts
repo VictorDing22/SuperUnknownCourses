@@ -12,11 +12,14 @@ export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 export const IS_CAMPUS = BASE_PATH !== '';
 
 /**
- * 「工作室平台」链接目标。
- * 默认指向工作室官网（独立域名）；如果某次部署想指回同源的跨界平台，
- * 把 NEXT_PUBLIC_PORTAL_URL 设成 "/" 即可。
+ * 顶栏「跨界探索平台」链接目标。
+ * 默认指回同源的跨界探索平台（课程中心与它共用账号，来回切换很自然）；
+ * 想指到对外官网时把 NEXT_PUBLIC_PORTAL_URL 设成 https://www.tavis.com.cn。
  */
-export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL ?? 'https://www.tavis.com.cn';
+export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL ?? '/';
+
+/** 该链接的显示名 */
+export const PORTAL_LABEL = process.env.NEXT_PUBLIC_PORTAL_LABEL ?? '跨界探索平台';
 
 /**
  * 给以 `/` 开头的站内资源路径加上部署前缀。

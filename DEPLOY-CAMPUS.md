@@ -34,7 +34,8 @@ next build
 |---|---|---|
 | `NEXT_PUBLIC_BASE_PATH` | 挂载前缀，校园版 `/plaza` | 空（根路径，即 main） |
 | `NEXT_PUBLIC_SITE_URL` | og:image 等绝对地址 | `http://localhost:3000` |
-| `NEXT_PUBLIC_PORTAL_URL` | 顶栏/页脚「工作室平台」指向 | `https://www.tavis.com.cn`（设成 `/` 则指回跨界平台） |
+| `NEXT_PUBLIC_PORTAL_URL` | 顶栏/页脚入口链接指向 | `/`（同源跨界探索平台）；设成官网地址则跳外部 |
+| `NEXT_PUBLIC_PORTAL_LABEL` | 该入口的显示名 | `跨界探索平台` |
 | `NEXT_PUBLIC_LOGIN_URL` | 登录页地址（一般不用改） | `${BASE_PATH}/login/` |
 | `NEXT_PUBLIC_API_BASE_URL` | 后端接口前缀 | `/api`（同源） |
 
