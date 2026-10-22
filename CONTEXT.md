@@ -120,7 +120,7 @@ content/courses/
   zoujin-chaoweizhi.json        课程元数据 + 11 个章节
 public/courses/zoujin-chaoweizhi/
   classroom.html                7.8MB SuperUnknownMAIC 离线课程
-  cover.jpg                     课程封面（scene 10）
+  cover.jpg                     课程封面（scene 3 · 关卡1 改名）
   scene-1.jpg ~ scene-11.jpg    章节缩略图
 scripts/
   capture-covers.mjs            Playwright 截封面/缩略图
@@ -136,7 +136,7 @@ docs/
 - 标题：走进超未知软件工作室
 - 副标题：工作室入门 · 网页改造实战
 - 11 个场景：4 张幻灯片 + 5 个互动关卡 + 2 个测验
-- 封面：`/courses/zoujin-chaoweizhi/cover.jpg`
+- 封面：`/courses/zoujin-chaoweizhi/cover.jpg`（取自 scene 3「关卡 1 · 改名」的画面，已去掉播放器字幕条并裁成 16:9）
 - 播放器：`/courses/zoujin-chaoweizhi/classroom.html`
 - 章节链接：`/courses/zoujin-chaoweizhi/learn/#scene-<order>`
 
