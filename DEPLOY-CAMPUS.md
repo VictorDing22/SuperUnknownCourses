@@ -1,6 +1,6 @@
 # 部署到学院服务器（`/plaza/`）
 
-> **状态：进行中** —— 已完成构建形态改造（A2），鉴权与进度接口尚未接入。
+> **状态：前端已完成（A2/A3/A4）** —— 还差学习进度（A5）和 nginx 落地（A6）。
 >
 > | 项 | 值 |
 > |---|---|
@@ -19,8 +19,23 @@ Vercel 的部署方式见 `DEPLOY.md`（那是 `main` 的流程，本分支不�
 ```bash
 export PATH=/opt/homebrew/opt/node@22/bin:$PATH
 pnpm install
-pnpm build:campus      # 等价于 NEXT_PUBLIC_BASE_PATH=/plaza next build
+pnpm build:campus
 ```
+
+实际等价于：
+
+```bash
+NEXT_PUBLIC_BASE_PATH=/plaza \
+NEXT_PUBLIC_SITE_URL=http://101.42.182.117 \
+next build
+```
+
+| 环境变量 | 作用 | 默认 |
+|---|---|---|
+| `NEXT_PUBLIC_BASE_PATH` | 挂载前缀，校园版 `/plaza` | 空（根路径，即 main） |
+| `NEXT_PUBLIC_SITE_URL` | og:image 等绝对地址 | `http://localhost:3000` |
+| `NEXT_PUBLIC_PORTAL_URL` | 顶栏/页脚「工作室平台」指向 | `/`（合作门户首页） |
+| `NEXT_PUBLIC_LOGIN_URL` | 登录页地址 | `/login` |
 
 产物仍在 `out/`，但内部资源路径会带 `/plaza` 前缀（如 `/plaza/_next/static/...`）。
 
@@ -88,10 +103,17 @@ ssh user@101.42.182.117 'sudo nginx -t && sudo nginx -s reload'
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | A2 | basePath + 构建脚本 + 预览脚本 | ✅ 完成 |
-| A3 | 课程资源路径加 `/plaza` 前缀（**现在 campus 构建的封面/缩略图/播放器仍会 404**） | ⬜ 待做 |
-| A4 | 登录门禁（读 sessionStorage + 跳 `/login`） | ⬜ 待做 |
-| A5 | 学习进度（调跨界系统接口） | ⬜ 待做 |
+| A3 | 课程资源路径加 `/plaza` 前缀（封面/缩略图/播放器） | ✅ 完成 |
+| A4 | 登录门禁（读 `cross-studio-auth-v1` + 顶栏用户） | ✅ 完成 |
+| A5 | 学习进度（需跨界后端接口） | ⬜ 待做 |
 | A6 | nginx 配置落地 + 部署脚本 + 回滚 | ⬜ 待做 |
+
+### 登录门禁的实现边界（重要）
+
+- 门禁是**客户端**的：读取 `sessionStorage['cross-studio-auth-v1']`，校验 `source === 'api'`、角色白名单和 `expiresAt`。
+- 未登录时**整页不渲染内容**，只显示「去登录」卡片，跳 `/login?redirect=<当前路径>`。
+- 因为内容是客户端渲染的，**静态 HTML 里不含课程内容**——对校内系统无所谓，但如果以后要 SEO 就得重新设计。
+- ⚠️ **`/plaza/courses/*/classroom.html` 是静态文件，nginx 会直接返回**，不经过任何鉴权。想真正锁住，需要在 nginx 上加 `auth_request` 转发到后端的 `/api/users/me` 校验。**这是 A6 的事，不要以为前端门禁能挡住直接访问 URL。**
 
 ## 五、和跨界平台的边界
 

@@ -11,7 +11,7 @@
     "preview": "python3 -m http.server 4000 -d out",
     "typecheck": "tsc --noEmit",
     "rebrand:player": "node scripts/rebrand-player.mjs --slug",
-    "build:campus": "NEXT_PUBLIC_BASE_PATH=/plaza next build",
+    "build:campus": "NEXT_PUBLIC_BASE_PATH=/plaza NEXT_PUBLIC_SITE_URL=http://101.42.182.117 next build",
     "preview:campus": "node scripts/preview-campus.mjs"
   },
   "dependencies": {

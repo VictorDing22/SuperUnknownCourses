@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { ChapterCard } from '@/components/chapter-card';
 import { getAllCourses, getCourse } from '@/lib/courses';
+import { IS_CAMPUS } from '@/lib/site';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -182,7 +183,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="size-3.5 text-primary" />
-              离线课程 · 无需登录
+              {IS_CAMPUS ? '校内课程 · 需登录' : '离线课程 · 无需登录'}
             </span>
           </div>
         </div>

@@ -1,3 +1,5 @@
+import { AuthGate } from '@/components/auth-gate';
+
 export default function PlayerLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <AuthGate>{children}</AuthGate>;
 }

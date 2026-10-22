@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { EurasiaMark } from '@/components/eurasia-mark';
+import { PORTAL_URL } from '@/lib/site';
 
 export function SiteFooter() {
   return (
@@ -20,9 +21,8 @@ export function SiteFooter() {
           <span className="hidden sm:inline">西安欧亚学院 · 基于 SuperUnknownMAIC 构建</span>
           <span className="sm:hidden">基于 SuperUnknownMAIC 构建</span>
           <a
-            href="https://www.tavis.com.cn"
-            target="_blank"
-            rel="noreferrer"
+            href={PORTAL_URL}
+            {...(/^https?:/i.test(PORTAL_URL) ? { target: '_blank', rel: 'noreferrer' } : {})}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
           >
             工作室平台

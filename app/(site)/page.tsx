@@ -2,6 +2,7 @@ import { CourseCard } from '@/components/course-card';
 import { ComingSoonCard } from '@/components/coming-soon-card';
 import { EurasiaMark } from '@/components/eurasia-mark';
 import { getAllCourses } from '@/lib/courses';
+import { IS_CAMPUS } from '@/lib/site';
 
 export default function HomePage() {
   const courses = getAllCourses();
@@ -74,7 +75,9 @@ export default function HomePage() {
         </div>
 
         <p className="mt-8 text-xs leading-relaxed text-muted-foreground/70">
-          提示：课程播放器为离线版本，点开后无需登录；建议使用 Chrome、Edge 或 Safari，并允许声音播放。
+          {IS_CAMPUS
+            ? '提示：课程播放器为离线版本；请使用 Chrome、Edge 或 Safari 打开，并允许声音播放。'
+            : '提示：课程播放器为离线版本，点开后无需登录；建议使用 Chrome、Edge 或 Safari，并允许声音播放。'}
         </p>
       </section>
     </div>
