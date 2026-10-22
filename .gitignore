@@ -4,3 +4,6 @@ out
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# 构建时生成的课程清单（供跨界平台读取）
+public/courses/index.json

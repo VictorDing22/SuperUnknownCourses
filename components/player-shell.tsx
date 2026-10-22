@@ -10,6 +10,26 @@ import { cn } from '@/lib/utils';
 export function PlayerShell({ course }: { course: Course }) {
   const [src, setSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  /**
+   * 嵌入模式：被跨界系统用 iframe 打开时带 ?embed=1，
+   * 此时隐藏平台自己的「返回课程」胶囊（外层已有导航），避免两个返回入口打架。
+   */
+  const [embedded, setEmbedded] = useState(false);
+
+  useEffect(() => {
+    setEmbedded(new URLSearchParams(window.location.search).has('embed'));
+  }, []);
+
+  // 嵌入模式下把 ESC 转给外层容器：iframe 获得焦点后，父页收不到键盘事件
+  useEffect(() => {
+    if (!embedded) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || document.fullscreenElement) return;
+      window.parent?.postMessage({ type: 'superunknown:close-course' }, window.location.origin);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [embedded]);
 
   useEffect(() => {
     const applyHash = () => {
@@ -35,13 +55,15 @@ export function PlayerShell({ course }: { course: Course }) {
         />
       ) : null}
 
-      <Link
-        href={`/courses/${course.slug}/`}
-        className="absolute left-1/2 top-2 z-20 hidden -translate-x-1/2 items-center gap-1.5 rounded-full bg-slate-900/55 px-3 py-1.5 text-[11px] font-medium text-white/85 backdrop-blur-sm transition-colors hover:bg-slate-900/75 hover:text-white sm:inline-flex"
-      >
-        <ArrowLeft className="size-3.5" />
-        返回课程
-      </Link>
+      {embedded ? null : (
+        <Link
+          href={`/courses/${course.slug}/`}
+          className="absolute left-1/2 top-2 z-20 hidden -translate-x-1/2 items-center gap-1.5 rounded-full bg-slate-900/55 px-3 py-1.5 text-[11px] font-medium text-white/85 backdrop-blur-sm transition-colors hover:bg-slate-900/75 hover:text-white sm:inline-flex"
+        >
+          <ArrowLeft className="size-3.5" />
+          返回课程
+        </Link>
+      )}
 
       <div
         className={cn(
