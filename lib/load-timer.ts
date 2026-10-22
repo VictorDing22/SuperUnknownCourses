@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 
 /** 超过这个时间还没加载完，提示"网络较慢" */
 export const SLOW_AFTER_MS = 10_000;
-/** 超过这个时间判定加载失败，给重试和新窗口出口 */
-export const FAIL_AFTER_MS = 45_000;
+/**
+ * 超过这个时间判定加载失败。
+ * 课程包含内嵌音频，约 5.8MB（gzip 后）；服务器出网只有 1Mbps 时单次要 50–100 秒，
+ * 所以阈值放宽到 3 分钟，避免正常但慢的加载被误判成失败。
+ */
+export const FAIL_AFTER_MS = 180_000;
 
 export interface LoadTimer {
   elapsed: number;
