@@ -27,10 +27,11 @@ pnpm dev
 
 访问：
 
-- 首页：http://localhost:3000
-- 课程详情：http://localhost:3000/courses/zoujin-chaoweizhi/
-- 播放：http://localhost:3000/courses/zoujin-chaoweizhi/learn/
-- 深链示例：http://localhost:3000/courses/zoujin-chaoweizhi/learn/#scene-8
+- 首页（课程广场）：http://localhost:3000/plaza/
+- 课程详情 + 播放：http://localhost:3000/plaza/courses/view/?slug=zoujin-chaoweizhi
+- 我的课程：http://localhost:3000/plaza/my/
+- 课程管理（教师）：http://localhost:3000/plaza/manage/
+- 本地调试要走门户代理 http://localhost:5173/plaza/，否则 `/api` 请求没有后端
 
 构建与预览：
 
@@ -80,15 +81,21 @@ export PATH=/opt/homebrew/opt/node@22/bin:$PATH
 ## 5. 页面与路由
 
 ```
-/                                     课程广场
-/courses/[slug]/                      课程详情
-/courses/[slug]/learn/                全屏播放（iframe）
+/                                     课程广场（列表来自 /api/course/catalog）
+/login/                               登录 / 注册 / 忘记密码引导
+/courses/view/?slug=<slug>            课程详情 + 播放（唯一的课程入口）
+/my/                                  我的课程
+/manage/                              课程管理（仅教师）
 ```
+
+**只有一个课程详情入口**：`/courses/view/?slug=`。
+静态导出无法为运行时新建的课程生成 HTML，所以不再有 `/courses/[slug]/` 这类按 slug 预生成的页面。
 
 路由分组：
 
 - `app/(site)/`：带 Header/Footer 的展示页
-- `app/(player)/`：无 Header/Footer 的播放页
+- `app/(auth)/`：无 Header/Footer 的登录页
+- 播放是 `/courses/view/` 内的全屏状态，不再单独占一个路由
 - `app/layout.tsx`：html/body + ThemeProvider
 - `app/not-found.tsx`：品牌化 404
 
@@ -98,11 +105,13 @@ export PATH=/opt/homebrew/opt/node@22/bin:$PATH
 app/
   (site)/
     layout.tsx                  Header + main + Footer
-    page.tsx                    课程广场
-    courses/[slug]/page.tsx     课程详情
-  (player)/
+    page.tsx                    课程广场（搜索 + 网格）
+    courses/view/page.tsx       课程详情 + 播放（读 ?slug=）
+    my/page.tsx                 我的课程
+    manage/page.tsx             课程管理（教师）
+  (auth)/
     layout.tsx                  空布局
-    courses/[slug]/learn/page.tsx  播放页
+    login/page.tsx              登录页
   globals.css                   设计 tokens / 动画 / 深色模式
   layout.tsx                    根布局 + metadata
   not-found.tsx
@@ -110,10 +119,10 @@ app/
 components/
   site-header.tsx
   site-footer.tsx
-  course-card.tsx
+  course-explorer.tsx          广场搜索 + 卡片网格
   coming-soon-card.tsx
-  chapter-card.tsx
-  player-shell.tsx              iframe + 加载遮罩 + 返回课程
+  manage-link.tsx              教师可见的「课程管理」
+  my-courses-link.tsx          登录可见的「我的课程」
   eurasia-mark.tsx              E^u 校徽 SVG
   theme-provider.tsx
   theme-toggle.tsx
@@ -142,7 +151,7 @@ docs/
 - 11 个场景：4 张幻灯片 + 5 个互动关卡 + 2 个测验
 - 封面：`/courses/zoujin-chaoweizhi/cover.jpg`（取自 scene 3「关卡 1 · 改名」的画面，已去掉播放器字幕条并裁成 16:9）
 - 播放器：`/courses/zoujin-chaoweizhi/classroom.html`
-- 章节链接：`/courses/zoujin-chaoweizhi/learn/#scene-<order>`
+- 场景深链：`/plaza/courses/view/?slug=zoujin-chaoweizhi#scene-<order>`
 
 `lib/courses.ts` 目前只导入这一门课。新增课程时：
 

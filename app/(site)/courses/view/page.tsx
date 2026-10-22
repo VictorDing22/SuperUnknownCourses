@@ -26,6 +26,7 @@ import {
 } from '@/lib/learning';
 import { useLoadTimer } from '@/lib/load-timer';
 import { BASE_PATH } from '@/lib/site';
+import { getBundledPlayer } from '@/lib/courses';
 
 const SCENE_POLL_MS = 1500;
 const HEARTBEAT_MS = 30_000;
@@ -48,6 +49,7 @@ export default function CourseViewPage() {
   const [loaded, setLoaded] = useState(false);
   const [resumedAt, setResumedAt] = useState<number | null>(null);
   const [playAttempt, setPlayAttempt] = useState(0);
+  const [playError, setPlayError] = useState('');
   const timer = useLoadTimer(loaded && playing, playAttempt);
 
   const frameRef = useRef<HTMLIFrameElement | null>(null);
@@ -68,11 +70,18 @@ export default function CourseViewPage() {
       fetchPackageUrl(value, session.accessToken),
       fetchProgress(value, session.accessToken),
     ]);
+    const base = link?.url ?? getBundledPlayer(value);
+    if (!base) {
+      setPlaying(false);
+      setPlayError('这门课还没有上传课程包，请老师先在课程管理里上传。');
+      return;
+    }
+    setPlayError('');
     const scene = progress && progress.lastScene > 1 ? progress.lastScene : 1;
     sceneRef.current = scene;
     seenRef.current = new Set([scene]);
     if (scene > 1) setResumedAt(scene);
-    setSrc(`${link?.url ?? ''}#scene-${scene}`);
+    setSrc(`${base}#scene-${scene}`);
   }, []);
 
   useEffect(() => {
@@ -359,6 +368,12 @@ export default function CourseViewPage() {
               <dd className="mt-1 text-sm font-semibold tracking-tight text-foreground">{course.duration || '随时可学'}</dd>
             </div>
           </dl>
+
+          {playError ? (
+            <p className="mt-4 rounded-xl border border-destructive/25 bg-destructive/[0.05] px-4 py-2.5 text-[12.5px] text-destructive">
+              {playError}
+            </p>
+          ) : null}
 
           <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
             <button

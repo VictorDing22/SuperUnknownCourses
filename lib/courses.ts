@@ -1,15 +1,6 @@
 import zoujinChaoweizhi from '@/content/courses/zoujin-chaoweizhi.json';
 import { withBasePath } from '@/lib/site';
 
-export type ChapterType = 'slide' | 'interactive' | 'quiz' | 'pbl';
-
-export interface Chapter {
-  order: number;
-  type: ChapterType;
-  title: string;
-  thumb?: string;
-}
-
 export interface CourseStats {
   scenes: number;
   slides: number;
@@ -17,6 +8,7 @@ export interface CourseStats {
   quizzes: number;
 }
 
+/** 构建时的课程元数据：只用于广场在接口不可用时的兜底展示 */
 export interface Course {
   slug: string;
   title: string;
@@ -31,34 +23,23 @@ export interface Course {
   htmlPath: string;
   featured?: boolean;
   stats: CourseStats;
-  chapters: Chapter[];
 }
 
 /**
- * 课程 JSON 里的封面、章节缩略图、播放器地址都是根绝对路径
- * （如 `/courses/<slug>/cover.jpg`）。部署到子路径时，
- * next/img 和 iframe 不会自动加 basePath，所以在这里统一补一次。
- *
- * 只处理资源地址；页面跳转走 next/link，Next 会自动加前缀。
+ * 课程 JSON 里的封面是根绝对路径（如 `/courses/<slug>/cover.jpg`）。
+ * 部署到子路径时静态资源不会自动加 basePath，所以在这里统一补一次。
  */
 function withAssetPrefix(course: Course): Course {
-  return {
-    ...course,
-    cover: withBasePath(course.cover),
-    htmlPath: withBasePath(course.htmlPath),
-    chapters: course.chapters.map((chapter) => ({
-      ...chapter,
-      thumb: chapter.thumb ? withBasePath(chapter.thumb) : chapter.thumb,
-    })),
-  };
+  return { ...course, cover: withBasePath(course.cover), htmlPath: withBasePath(course.htmlPath) };
 }
 
-const courses: Course[] = [withAssetPrefix(zoujinChaoweizhi as Course)];
+const courses: Course[] = [withAssetPrefix(zoujinChaoweizhi as unknown as Course)];
 
 export function getAllCourses(): Course[] {
   return courses;
 }
 
-export function getCourse(slug: string): Course | undefined {
-  return courses.find((course) => course.slug === slug);
+/** 仓库里自带的课程包（接口没有版本时兜底用） */
+export function getBundledPlayer(slug: string): string | null {
+  return courses.find((course) => course.slug === slug)?.htmlPath ?? null;
 }

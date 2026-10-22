@@ -11,9 +11,9 @@ export PATH=/opt/homebrew/opt/node@22/bin:$PATH
 pnpm dev
 ```
 
-- 首页：http://localhost:3000
-- 课程详情：http://localhost:3000/courses/zoujin-chaoweizhi/
-- 播放页：http://localhost:3000/courses/zoujin-chaoweizhi/learn/
+- 课程广场：http://localhost:3000/plaza/
+- 课程详情 + 播放：http://localhost:3000/plaza/courses/view/?slug=zoujin-chaoweizhi
+- 我的课程 / 课程管理：/plaza/my/ 、/plaza/manage/（后者仅教师）
 
 注意：
 
