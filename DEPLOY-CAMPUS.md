@@ -55,30 +55,22 @@ pnpm preview:campus    # → http://localhost:4000/plaza/
 
 ```nginx
 # 必须写在 SPA 的 try_files 兜底之前
+location = /plaza {
+    return 301 /plaza/;
+}
+
 location /plaza/ {
-    alias /var/www/plaza/;
+    # 目录名与 URI 一致，用 root 比 alias 稳（alias + try_files 容易踩坑）
+    root /var/www;
     index index.html;
     try_files $uri $uri/ /plaza/index.html;
-
-    # 带 hash 的构建产物，长缓存
-    location /plaza/_next/static/ {
-        alias /var/www/plaza/_next/static/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # 播放器：8MB，缓存 1 小时
-    location ~ ^/plaza/(courses/.+/classroom\.html)$ {
-        alias /var/www/plaza/$1;
-        expires 1h;
-    }
-
-    # 图片
-    location ~ ^/plaza/(courses/.+\.(?:jpg|jpeg|png|webp|svg))$ {
-        alias /var/www/plaza/$1;
-        expires 1d;
-    }
 }
+```
+
+同时把上传上限调大（课程包 200MB）：
+
+```nginx
+client_max_body_size 210m;   # 原来是 12m
 ```
 
 ⚠️ 现有的跨界平台前端是 SPA（`try_files ... /index.html`），**未知路径会被它吞掉**。`/plaza/` 的 location 必须放在兜底规则前面，否则课程站永远打不开。
@@ -99,6 +91,45 @@ ssh user@101.42.182.117 'sudo nginx -t && sudo nginx -s reload'
 # 服务器上
 /var/www/plaza -> releases/2026-10-22-1430
 ```
+
+## 三点五、上线记录（2026-10-22）
+
+### 实际执行
+
+| 步骤 | 命令要点 | 结果 |
+|---|---|---|
+| 备份 | `mysqldump`、`cp app.jar`、`tar /var/www/cross-studio` | `/var/backups/*2026-10-22-1950*` |
+| 后端 | 替换 `/opt/cross-studio/app.jar` → `systemctl restart cross-studio` | Flyway **V20→V22** 成功 |
+| 门户前端 | `dist/client` → `/var/www/cross-studio`（旧的改名 `.previous`） | 368 文件 |
+| 课程站 | `out/` → `/var/www/plaza` | 100 文件 |
+| nginx | `/plaza/` location + `client_max_body_size 210m` | 配置备份在 `/etc/nginx/backups/` |
+
+### 上线时踩到的坑
+
+1. **迁移卡住 4 分半**：一个 `root@localhost` 的闲置事务（跑了 2 小时 38 分）持有元数据锁，`CREATE TABLE courses` 一直等锁。
+   排查用 `select * from information_schema.processlist where command!='Sleep'`，`kill <id>` 后迁移立即完成。
+   **下次迁移前先查一遍有没有长事务。**
+2. **nginx 备份文件放错位置**：`cp` 到 `sites-enabled/` 里会被当作站点加载，报 `duplicate default server`。备份要放 `sites-conf/backups/` 之外。
+3. **`alias` + `try_files` 不生效**：`/plaza/` 返回了门户的 index.html。改成 `root /var/www` + `try_files $uri $uri/ /plaza/index.html` 后正常。
+
+### 回滚
+
+```bash
+# 后端
+sudo systemctl stop cross-studio
+sudo cp /opt/cross-studio/app.jar.pre-2026-10-22-1950 /opt/cross-studio/app.jar
+sudo systemctl start cross-studio
+
+# 门户前端
+sudo rm -rf /var/www/cross-studio
+sudo cp -a /var/www/cross-studio.previous /var/www/cross-studio
+
+# 数据库（会丢 V20–V22 之后的数据）
+sudo mysql cross_studio < /var/backups/cross_studio_2026-10-22-1950.sql
+```
+
+⚠️ 回滚代码**不能**自动回滚 Flyway：`V20–V22` 已经记录在 `flyway_schema_history`，旧 jar 的 `ddl-auto=validate` 会通过（新表不影响旧实体），
+但若要彻底回到 19 版，需要手动删除这三张表和两条 `ALTER`，**一般不需要**。
 
 ## 四、待办
 
