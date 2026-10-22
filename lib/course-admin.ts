@@ -64,6 +64,69 @@ export async function createCourse(input: CreateCourseInput, token: string) {
   return payload as { id: number; slug: string; title: string; subtitle: string };
 }
 
+export async function updateCourse(
+  slug: string,
+  input: { title: string; subtitle?: string },
+  token: string,
+): Promise<void> {
+  const response = await fetch(`${API_BASE}/course/${slug}`, {
+    method: 'PUT',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) throw new Error(await readProblem(response, '保存失败'));
+}
+
+export async function uploadCourseCover(slug: string, file: File, token: string): Promise<string> {
+  const body = new FormData();
+  body.append('file', file);
+  const response = await fetch(`${API_BASE}/course/${slug}/cover`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    body,
+  });
+  if (!response.ok) throw new Error(await readProblem(response, '封面上传失败'));
+  const payload = (await response.json()) as { cover: string };
+  return payload.cover;
+}
+
+export async function archiveCourse(slug: string, token: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/course/${slug}/archive`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(await readProblem(response, '下架失败'));
+}
+
+export interface MineCourse {
+  slug: string;
+  title: string;
+  subtitle: string;
+  cover: string;
+  totalScenes: number;
+  lastScene: number;
+  scenesSeen: number;
+  updatedAt: string | null;
+}
+
+export async function fetchMyCourses(token: string): Promise<MineCourse[]> {
+  const response = await fetch(`${API_BASE}/course/mine`, {
+    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    cache: 'no-cache',
+  });
+  if (!response.ok) throw new Error(`我的课程加载失败（HTTP ${response.status}）`);
+  return (await response.json()) as MineCourse[];
+}
+
+async function readProblem(response: Response, fallback: string): Promise<string> {
+  try {
+    const problem = (await response.json()) as { detail?: string; title?: string };
+    return problem.detail || problem.title || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export interface UploadResult {
   version: number;
   sizeBytes: number;

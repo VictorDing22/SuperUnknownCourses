@@ -29,6 +29,7 @@ export default function CourseViewPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const [progressInfo, setProgressInfo] = useState<{ lastScene: number; scenesSeen: number } | null>(null);
   const [playing, setPlaying] = useState(false);
   const [src, setSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -57,8 +58,16 @@ export default function CourseViewPage() {
       setLoading(false);
       return;
     }
-    fetchCourseDetail(value, session.accessToken)
-      .then((detail) => setCourse(detail))
+    Promise.all([
+      fetchCourseDetail(value, session.accessToken),
+      fetchProgress(value, session.accessToken),
+    ])
+      .then(([detail, progress]) => {
+        setCourse(detail);
+        if (progress && progress.scenesSeen > 0) {
+          setProgressInfo({ lastScene: progress.lastScene, scenesSeen: progress.scenesSeen });
+        }
+      })
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : '课程加载失败'))
       .finally(() => setLoading(false));
   }, []);
@@ -282,13 +291,30 @@ export default function CourseViewPage() {
             </span>
           </dl>
 
+          {progressInfo ? (
+            <div className="mt-5 max-w-sm">
+              <div className="flex items-center justify-between text-[11.5px] text-muted-foreground">
+                <span>
+                  上次学到第 {progressInfo.lastScene} 幕 · {progressInfo.scenesSeen}/{total} 幕
+                </span>
+                <span>{Math.min(100, Math.round((progressInfo.scenesSeen / total) * 100))}%</span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${Math.max(4, Math.min(100, (progressInfo.scenesSeen / total) * 100))}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+
           <button
             type="button"
             onClick={start}
             className="mt-7 inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
             <Play className="size-4 fill-current" />
-            开始学习
+            {progressInfo ? '继续学习' : '开始学习'}
           </button>
         </div>
       </div>

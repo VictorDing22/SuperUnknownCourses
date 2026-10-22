@@ -107,8 +107,10 @@ ssh user@101.42.182.117 'sudo nginx -t && sudo nginx -s reload'
 | A2 | basePath + 构建脚本 + 预览脚本 | ✅ 完成 |
 | A3 | 课程资源路径加 `/plaza` 前缀（封面/缩略图/播放器） | ✅ 完成 |
 | A4 | 登录门禁（读 `cross-studio-auth-v1` + 顶栏用户） | ✅ 完成 |
-| A5 | 学习进度（需跨界后端接口） | ⬜ 待做 |
-| A6 | nginx 配置落地 + 部署脚本 + 回滚 | ⬜ 待做 |
+| A5 | 学习进度（续播 + 心跳 + 我的课程） | ✅ 完成 |
+| A6 | nginx 配置落地 + 部署脚本 + 回滚 | ⬜ **上线前执行** |
+| A7 | 课程包上传存储化 + 签名下发 | ✅ 完成 |
+| A8 | 教师端课程管理（新建/改信息/封面/下架） | ✅ 完成 |
 
 ### 登录门禁的实现边界（重要）
 
@@ -116,6 +118,63 @@ ssh user@101.42.182.117 'sudo nginx -t && sudo nginx -s reload'
 - 未登录时**整页不渲染内容**，只显示「去登录」卡片，跳 `/login?redirect=<当前路径>`。
 - 因为内容是客户端渲染的，**静态 HTML 里不含课程内容**——对校内系统无所谓，但如果以后要 SEO 就得重新设计。
 - ⚠️ **`/plaza/courses/*/classroom.html` 是静态文件，nginx 会直接返回**，不经过任何鉴权。想真正锁住，需要在 nginx 上加 `auth_request` 转发到后端的 `/api/users/me` 校验。**这是 A6 的事，不要以为前端门禁能挡住直接访问 URL。**
+
+## 四点四、课程中心页面与接口（A5–A8 落地后）
+
+### 页面
+
+| 路径 | 谁能看 | 说明 |
+|---|---|---|
+| `/plaza/` | 登录用户 | 课程广场，列表来自 `GET /api/course/catalog`，支持模糊搜索 |
+| `/plaza/courses/zoujin-chaoweizhi/` | 登录用户 | 种子课程的静态详情页（构建时生成） |
+| `/plaza/courses/view/?slug=<slug>` | 登录用户 | **通用课程页**：运行时新建的课程都走这里（详情 + 播放 + 续播 + 心跳） |
+| `/plaza/my/` | 登录用户 | 我的课程：继续学习 + 全部课程 + 进度条 |
+| `/plaza/manage/` | **仅教师** | 课程管理：新建、改名称/副标题、换封面、更新版本、下架 |
+| `/plaza/login/` | 公开 | 登录 / 注册 / 忘记密码引导 |
+
+### 接口
+
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| GET | `/api/course/catalog` | 登录 | 已发布课程目录 |
+| GET | `/api/course/mine` | 登录 | 我的课程 + 我的进度 |
+| GET | `/api/course/{slug}` | 登录 | 课程详情 |
+| GET/PUT | `/api/course/{slug}/progress` | 登录 | 学习进度（只前进不后退） |
+| POST | `/api/course/{slug}/heartbeat` | 登录 | 观看心跳（时长/场景/完成） |
+| POST | `/api/course` | 教师 | 新建课程 |
+| PUT | `/api/course/{slug}` | 教师 | 改名称/副标题 |
+| POST | `/api/course/{slug}/package` | 教师 | 上传课程包（.html/.zip，≤200MB） |
+| POST | `/api/course/{slug}/cover` | 教师 | 上传封面（jpg/png/webp，≤4MB） |
+| POST | `/api/course/{slug}/archive` | 教师 | 下架（学生端不再显示） |
+| GET | `/api/course/{slug}/package?token=` | 公开（签名） | 播放器加载课程包，10 分钟有效 |
+| GET | `/api/course/{slug}/cover` | 公开 | 封面图片 |
+
+### 数据库（Flyway）
+
+| 版本 | 内容 |
+|---|---|
+| V20 | `courses` / `course_versions` / `course_progress` / `course_view_sessions` |
+| V21 | 目录字段：封面、标签、难度、时长、各类型场景数 |
+| V22 | `courses.cover_key`（封面对象键） |
+
+**上线前必须在生产库执行到 V22**，`ddl-auto=validate`，迁移没跑应用会起不来。
+
+### 上传相关的服务器配置
+
+```nginx
+# 课程包 200MB + 富余
+client_max_body_size 210m;
+```
+
+Spring 侧已在 `application.yml` 调整为 `max-file-size: 200MB` / `max-request-size: 210MB`；
+`proxy_request_buffering` 保持默认即可（8MB 以内不需要特殊处理，200MB 上传建议开启 `proxy_request_buffering off;` 减少磁盘中转）。
+
+### 已知边界
+
+- **课程包是单个自包含 HTML**（约 8MB），移动网络首屏 10–30 秒；播放页有 10 秒慢速提示和 45 秒失败重试。
+- **签名地址 10 分钟过期**：页面停留不影响已加载内容，刷新会重新签发。
+- **下架是软删除**：`status=ARCHIVED`，数据保留，目录/详情/播放地址均不可见。
+- **旧静态文件仍在仓库里**（`public/courses/*/classroom.html`），播放器优先用签名地址，拿不到才回退静态文件；上线后可以按需删除。
 
 ## 四点五、登录页
 
