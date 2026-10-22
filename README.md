@@ -47,3 +47,7 @@ pnpm preview
 ```
 
 静态产物在 `out/`，`pnpm preview` 会在 http://localhost:4000 预览。
+
+## 部署
+
+上线到 Vercel，域名 `courses.tavis.com.cn`。完整步骤（项目设置、域名、DNS、验收清单、排错）见 [DEPLOY.md](DEPLOY.md)。
