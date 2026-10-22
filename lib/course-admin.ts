@@ -42,6 +42,8 @@ export async function fetchCourseDetail(slug: string, token: string): Promise<Co
 export interface CreateCourseInput {
   title: string;
   subtitle?: string;
+  /** 课程链接标识；留空由后端按时间戳生成 */
+  slug?: string;
 }
 
 export async function createCourse(input: CreateCourseInput, token: string) {

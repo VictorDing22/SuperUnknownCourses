@@ -32,6 +32,7 @@ export default function ManagePage() {
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
+  const [slugInput, setSlugInput] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [phase, setPhase] = useState<UploadPhase>(IDLE);
 
@@ -109,7 +110,11 @@ export default function ManagePage() {
     setPhase(IDLE);
     try {
       const created = await createCourse(
-        { title: title.trim(), subtitle: subtitle.trim() },
+        {
+          title: title.trim(),
+          subtitle: subtitle.trim(),
+          ...(slugInput.trim() ? { slug: slugInput.trim().toLowerCase() } : {}),
+        },
         session.accessToken,
       );
       setPhase({ progress: 0, error: '', done: '' });
@@ -123,6 +128,7 @@ export default function ManagePage() {
       });
       setTitle('');
       setSubtitle('');
+      setSlugInput('');
       setFile(null);
       load(session.accessToken);
     } catch (reason) {
@@ -170,6 +176,7 @@ export default function ManagePage() {
             setPhase(IDLE);
             setTitle('');
             setSubtitle('');
+            setSlugInput('');
             setFile(null);
           }}
           disabled={busy}
@@ -261,6 +268,17 @@ export default function ManagePage() {
               placeholder="例如：工作室入门 · 网页改造实战"
               className={inputClass}
             />
+          </Field>
+          <Field label="课程标识（可选）">
+            <input
+              value={slugInput}
+              onChange={(event) => setSlugInput(event.target.value)}
+              placeholder="例如：zoujin-chaoweizhi"
+              className={inputClass}
+            />
+            <span className="mt-1 block text-[11px] text-muted-foreground">
+              用于课程链接，只能用小写字母、数字和横线；留空自动生成。
+            </span>
           </Field>
           <Field label="课程包文件">
             <button

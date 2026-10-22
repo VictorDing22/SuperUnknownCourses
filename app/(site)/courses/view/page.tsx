@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock3, Loader2, Play, Presentation } from 'lucide-react';
+import { ArrowLeft, Clock3, Loader2, Play, Presentation, RotateCw, Smartphone } from 'lucide-react';
 import { readAuthSession } from '@/lib/auth';
 import { fetchCourseDetail, type CourseDetail } from '@/lib/course-admin';
 import {
@@ -12,6 +12,7 @@ import {
   saveProgress,
   sendHeartbeat,
 } from '@/lib/learning';
+import { useLoadTimer } from '@/lib/load-timer';
 
 const SCENE_POLL_MS = 1500;
 const HEARTBEAT_MS = 30_000;
@@ -32,6 +33,8 @@ export default function CourseViewPage() {
   const [src, setSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [resumedAt, setResumedAt] = useState<number | null>(null);
+  const [playAttempt, setPlayAttempt] = useState(0);
+  const timer = useLoadTimer(loaded && playing, playAttempt);
 
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const sceneRef = useRef(1);
@@ -86,6 +89,8 @@ export default function CourseViewPage() {
   const start = async () => {
     const session = readAuthSession();
     if (!session || !slug) return;
+    setLoaded(false);
+    timer.restart();
     setPlaying(true);
     const [link, progress] = await Promise.all([
       fetchPackageUrl(slug, session.accessToken),
@@ -196,9 +201,40 @@ export default function CourseViewPage() {
           </div>
         ) : null}
         {!loaded ? (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950 text-white/60">
-            <Loader2 className="size-5 animate-spin text-primary" />
-            <p className="text-sm">正在加载课程…</p>
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center text-white/60">
+            {timer.failed ? (
+              <>
+                <h2 className="text-lg font-semibold text-white">课程加载失败</h2>
+                <p className="max-w-sm text-sm leading-relaxed text-white/60">
+                  等待 {timer.seconds} 秒仍未完成。课程包约 8 MB，移动网络较慢时可能失败。
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlayAttempt((value) => value + 1);
+                    timer.restart();
+                    start();
+                  }}
+                  className="mt-1 inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  <RotateCw className="size-4" />
+                  重试
+                </button>
+              </>
+            ) : (
+              <>
+                <Loader2 className="size-5 animate-spin text-primary" />
+                <p className="text-sm">
+                  {timer.slow ? `网络较慢，继续加载中…（已等待 ${timer.seconds} 秒）` : '正在加载课程…'}
+                </p>
+                {timer.slow ? (
+                  <p className="flex items-center gap-1.5 text-[11px] text-white/35">
+                    <Smartphone className="size-3.5" />
+                    手机建议横屏观看；4G 下通常需要 10–30 秒
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
         ) : null}
       </div>

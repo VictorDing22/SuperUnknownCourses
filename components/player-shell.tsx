@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, RotateCw, Smartphone } from 'lucide-react';
 import { EurasiaMark } from '@/components/eurasia-mark';
 import type { Course } from '@/lib/courses';
 import { readAuthSession } from '@/lib/auth';
@@ -13,6 +13,7 @@ import {
   saveProgress,
   sendHeartbeat,
 } from '@/lib/learning';
+import { useLoadTimer } from '@/lib/load-timer';
 import { cn } from '@/lib/utils';
 
 const SCENE_POLL_MS = 1500;
@@ -32,6 +33,9 @@ export function PlayerShell({ course }: { course: Course }) {
   /** 续播提示：从上次进度恢复时短暂显示 */
   const [resumedAt, setResumedAt] = useState<number | null>(null);
   const [resumeVisible, setResumeVisible] = useState(true);
+  /** 重试次数：变化时重新取签名地址并重新加载 iframe */
+  const [attempt, setAttempt] = useState(0);
+  const timer = useLoadTimer(loaded, attempt);
 
   const sceneRef = useRef(1);
   const seenRef = useRef<Set<number>>(new Set([1]));
@@ -64,6 +68,7 @@ export function PlayerShell({ course }: { course: Course }) {
   // 起始场景：URL hash 优先（深链），否则续播到上次的进度
   useEffect(() => {
     let cancelled = false;
+    setLoaded(false);
     const apply = (scene: number, resumed: boolean, base?: string) => {
       if (cancelled) return;
       sceneRef.current = scene;
@@ -96,7 +101,7 @@ export function PlayerShell({ course }: { course: Course }) {
     return () => {
       cancelled = true;
     };
-  }, [course.slug, course.htmlPath]);
+  }, [course.slug, course.htmlPath, attempt]);
 
   /** 上报一次心跳；ended 时结算离开时间 */
   const beat = useCallback(
@@ -192,6 +197,36 @@ export function PlayerShell({ course }: { course: Course }) {
         </Link>
       )}
 
+      {timer.failed && !loaded ? (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
+          <h2 className="text-lg font-semibold text-white">课程加载失败</h2>
+          <p className="max-w-sm text-sm leading-relaxed text-white/60">
+            等待 {timer.seconds} 秒仍未完成。课程包约 8 MB，移动网络较慢时可能失败。
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => {
+                setAttempt((value) => value + 1);
+                timer.restart();
+              }}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              <RotateCw className="size-4" />
+              重试
+            </button>
+            <a
+              href={course.htmlPath}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-white/20 px-5 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              新窗口打开
+            </a>
+          </div>
+        </div>
+      ) : null}
+
       {resumedAt !== null && loaded && resumeVisible ? (
         <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full bg-primary/95 px-3.5 py-1.5 text-[11.5px] font-medium text-white shadow-lg">
           已回到上次学习的位置 · 第 {resumedAt} 幕
@@ -202,6 +237,7 @@ export function PlayerShell({ course }: { course: Course }) {
         className={cn(
           'absolute inset-0 z-10 flex flex-col items-center justify-center gap-5 bg-slate-950 px-6 text-center transition-opacity duration-500',
           loaded && 'pointer-events-none opacity-0',
+          timer.failed && 'hidden',
         )}
         aria-hidden={loaded}
       >
@@ -219,7 +255,9 @@ export function PlayerShell({ course }: { course: Course }) {
           <h1 className="text-balance text-xl font-semibold text-white sm:text-2xl">
             {course.title}
           </h1>
-          <p className="text-sm text-white/50">正在加载课程…</p>
+          <p className="text-sm text-white/50">
+            {timer.slow ? `网络较慢，继续加载中…（已等待 ${timer.seconds} 秒）` : '正在加载课程…'}
+          </p>
         </div>
 
         <div className="relative mt-1 flex items-center gap-3 text-xs text-white/45">
@@ -230,6 +268,13 @@ export function PlayerShell({ course }: { course: Course }) {
         <div className="relative mt-2 h-1 w-56 overflow-hidden rounded-full bg-white/10">
           <div className="h-full w-1/3 animate-pulse rounded-full bg-primary" />
         </div>
+
+        {timer.slow ? (
+          <div className="relative mt-2 flex items-center gap-1.5 text-[11px] text-white/40">
+            <Smartphone className="size-3.5" />
+            手机建议横屏观看；4G 下通常需要 10–30 秒
+          </div>
+        ) : null}
       </div>
     </div>
   );
