@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { EurasiaMark } from '@/components/eurasia-mark';
-import { PORTAL_LABEL, PORTAL_URL } from '@/lib/site';
+import { PortalLink } from '@/components/portal-link';
 
 export function SiteFooter() {
   return (
@@ -20,14 +20,7 @@ export function SiteFooter() {
         <div className="flex flex-wrap items-center gap-4">
           <span className="hidden sm:inline">西安欧亚学院 · 基于 SuperUnknownMAIC 构建</span>
           <span className="sm:hidden">基于 SuperUnknownMAIC 构建</span>
-          <a
-            href={PORTAL_URL}
-            {...(/^https?:/i.test(PORTAL_URL) ? { target: '_blank', rel: 'noreferrer' } : {})}
-            className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
-          >
-            {PORTAL_LABEL}
-            {/^https?:/i.test(PORTAL_URL) ? <ArrowUpRight className="size-3" /> : null}
-          </a>
+          <PortalLink className="inline-flex items-center gap-1 transition-colors hover:text-foreground" />
           <Link href="/" className="transition-colors hover:text-foreground">
             课程广场
           </Link>
