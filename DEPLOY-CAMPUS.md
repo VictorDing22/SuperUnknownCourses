@@ -34,7 +34,7 @@ next build
 |---|---|---|
 | `NEXT_PUBLIC_BASE_PATH` | 挂载前缀，校园版 `/plaza` | 空（根路径，即 main） |
 | `NEXT_PUBLIC_SITE_URL` | og:image 等绝对地址 | `http://localhost:3000` |
-| `NEXT_PUBLIC_PORTAL_URL` | 顶栏/页脚「工作室平台」指向 | `/`（合作门户首页） |
+| `NEXT_PUBLIC_PORTAL_URL` | 顶栏/页脚「工作室平台」指向 | `https://www.tavis.com.cn`（设成 `/` 则指回跨界平台） |
 | `NEXT_PUBLIC_LOGIN_URL` | 登录页地址 | `/login` |
 
 产物仍在 `out/`，但内部资源路径会带 `/plaza` 前缀（如 `/plaza/_next/static/...`）。

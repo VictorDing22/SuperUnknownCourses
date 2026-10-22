@@ -11,8 +11,12 @@ export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 /** 是否为校园部署（挂在子路径下、需要登录） */
 export const IS_CAMPUS = BASE_PATH !== '';
 
-/** 门户系统地址：校园版是本站根路径（跨界探索平台），公开版是工作室官网 */
-export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL ?? '/';
+/**
+ * 「工作室平台」链接目标。
+ * 默认指向工作室官网（独立域名）；如果某次部署想指回同源的跨界平台，
+ * 把 NEXT_PUBLIC_PORTAL_URL 设成 "/" 即可。
+ */
+export const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL ?? 'https://www.tavis.com.cn';
 
 /** 门户登录页 */
 export const LOGIN_URL = process.env.NEXT_PUBLIC_LOGIN_URL ?? '/login';
