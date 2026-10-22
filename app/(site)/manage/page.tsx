@@ -65,7 +65,7 @@ export default function ManagePage() {
 
   if (session.user.role !== 'teacher') {
     return (
-      <main className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-24 text-center">
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-24 text-center">
         <h1 className="text-xl font-semibold text-foreground">仅教师可访问</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           当前账号是「{roleLabel(session.user.role)}」，课程包上传只对教师开放。
@@ -76,7 +76,7 @@ export default function ManagePage() {
         >
           返回课程广场
         </Link>
-      </main>
+      </div>
     );
   }
 
@@ -116,7 +116,7 @@ export default function ManagePage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border/60 pb-5">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">课程管理</h1>
@@ -282,6 +282,6 @@ export default function ManagePage() {
           </div>
         </div>
       ) : null}
-    </main>
+    </div>
   );
 }
