@@ -1,5 +1,4 @@
 import { CourseExplorer } from '@/components/course-explorer';
-import { EurasiaMark } from '@/components/eurasia-mark';
 import { getAllCourses } from '@/lib/courses';
 import { IS_CAMPUS } from '@/lib/site';
 
@@ -12,20 +11,9 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-grid opacity-60 [mask-image:radial-gradient(ellipse_at_top,black,transparent_72%)]" />
         <div className="pointer-events-none absolute -top-24 left-1/2 size-[520px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
-        <div className="relative mx-auto w-full max-w-7xl px-4 pb-10 pt-14 sm:px-6 sm:pt-20 lg:px-8">
+        <div className="relative mx-auto w-full max-w-7xl px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8">
           <div className="max-w-3xl">
-            <div className="flex items-center gap-2">
-              <EurasiaMark className="h-[18px] w-auto shrink-0 text-primary" />
-              <span className="text-[11px] font-semibold tracking-[0.2em] text-foreground/80 sm:text-xs">
-                SuperUnknown
-              </span>
-              <span className="text-[11px] text-muted-foreground/40 sm:text-xs">·</span>
-              <span className="text-[11px] tracking-[0.16em] text-muted-foreground sm:text-xs">
-                超未知软件工作室
-              </span>
-            </div>
-
-            <h1 className="mt-5 text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+            <h1 className="text-balance text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
               课程广场
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
