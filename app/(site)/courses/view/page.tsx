@@ -273,8 +273,8 @@ export default function CourseViewPage() {
   const percent = progressInfo ? Math.min(100, Math.round((progressInfo.scenesSeen / total) * 100)) : 0;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 sm:pt-10 lg:px-8">
-      <nav className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-label="面包屑">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 pt-5 sm:px-6 sm:pt-6 lg:px-8">
+      <nav className="flex items-center gap-1.5 text-[12px] text-muted-foreground" aria-label="面包屑">
         <Link href="/" className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
           <ArrowLeft className="size-3.5" />
           课程广场
@@ -283,13 +283,14 @@ export default function CourseViewPage() {
         <span className="truncate text-foreground/80">{course.title}</span>
       </nav>
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-[1.25fr_1fr] lg:items-start">
-        <button
-          type="button"
-          onClick={start}
-          className="group relative block aspect-video w-full overflow-hidden rounded-3xl bg-slate-900 text-left shadow-[0_30px_80px_-40px_rgba(15,23,42,0.55)] ring-1 ring-border/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label={`播放课程：${course.title}`}
-        >
+      <section className="mt-8 rounded-[28px] border border-border/70 bg-card/55 p-3 shadow-[0_24px_70px_-52px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:mt-10 sm:p-5 lg:mt-12 lg:p-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.18fr)_minmax(360px,0.82fr)] lg:items-stretch">
+          <button
+            type="button"
+            onClick={start}
+            className="group relative block aspect-video w-full self-start overflow-hidden rounded-2xl bg-slate-900 text-left shadow-[0_24px_60px_-36px_rgba(15,23,42,0.7)] ring-1 ring-border/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={`播放课程：${course.title}`}
+          >
           {course.cover ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -312,52 +313,52 @@ export default function CourseViewPage() {
               点击播放
             </span>
           </div>
-        </button>
+          </button>
 
-        <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.07] px-2.5 py-1 text-[10px] font-semibold tracking-[0.14em] text-primary">
+          <div className="flex min-w-0 flex-col lg:py-1">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.07] px-2.5 py-1 text-[10px] font-semibold tracking-[0.14em] text-primary">
             <span className="size-1.5 rounded-full bg-primary" />
             SUPERUNKNOWN 工作室课程
           </span>
 
-          <h1 className="mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h1 className="mt-3 text-balance text-3xl font-bold tracking-[-0.025em] text-foreground sm:text-[2rem] sm:leading-[1.2]">
             {course.title}
           </h1>
-          {course.subtitle ? <p className="mt-2 text-sm text-muted-foreground">{course.subtitle}</p> : null}
+          {course.subtitle ? <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{course.subtitle}</p> : null}
 
           {course.tags && course.tags.length > 0 ? (
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-1.5">
               {course.tags.map((tag) => (
-                <span key={tag} className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-secondary-foreground">
+                <span key={tag} className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-medium text-secondary-foreground">
                   {tag}
                 </span>
               ))}
             </div>
           ) : null}
 
-          <dl className="mt-7 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border/70">
+          <dl className="mt-5 grid grid-cols-2 overflow-hidden rounded-2xl border border-border/70 bg-card sm:grid-cols-4">
+            <div className="p-3.5 sm:border-r sm:border-border/70">
               <dt className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <Presentation className="size-3.5 text-sky-500" />
                 场景
               </dt>
-              <dd className="mt-1 text-xl font-semibold tracking-tight text-foreground">{total}</dd>
+              <dd className="mt-1 text-lg font-semibold tracking-tight text-foreground">{total}</dd>
             </div>
-            <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border/70">
+            <div className="border-l border-border/70 p-3.5 sm:border-l-0 sm:border-r">
               <dt className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <Atom className="size-3.5 text-violet-500" />
                 互动关卡
               </dt>
-              <dd className="mt-1 text-xl font-semibold tracking-tight text-foreground">{course.stats?.interactive ?? 0}</dd>
+              <dd className="mt-1 text-lg font-semibold tracking-tight text-foreground">{course.stats?.interactive ?? 0}</dd>
             </div>
-            <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border/70">
+            <div className="border-t border-border/70 p-3.5 sm:border-r sm:border-t-0">
               <dt className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <CircleHelp className="size-3.5 text-amber-500" />
                 测验
               </dt>
-              <dd className="mt-1 text-xl font-semibold tracking-tight text-foreground">{course.stats?.quizzes ?? 0}</dd>
+              <dd className="mt-1 text-lg font-semibold tracking-tight text-foreground">{course.stats?.quizzes ?? 0}</dd>
             </div>
-            <div className="rounded-2xl bg-card p-3.5 ring-1 ring-border/70">
+            <div className="border-l border-t border-border/70 p-3.5 sm:border-l-0 sm:border-t-0">
               <dt className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <Clock className="size-3.5 text-emerald-500" />
                 时长
@@ -375,7 +376,7 @@ export default function CourseViewPage() {
           <button
             type="button"
             onClick={start}
-            className="mt-7 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90 hover:shadow-md"
+            className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:-translate-y-0.5 hover:opacity-95 hover:shadow-md lg:mt-auto"
           >
             <Play className="size-4 fill-current" />
             {progressInfo ? '继续学习' : '开始学习'}
@@ -394,8 +395,9 @@ export default function CourseViewPage() {
               </div>
             </div>
           ) : null}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
